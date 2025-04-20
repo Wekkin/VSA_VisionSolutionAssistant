@@ -1,88 +1,76 @@
-# 工业视觉检测办公助手
+# 工业视觉辅助系统
 
-这是一个专门为工业视觉检测工程师设计的办公自动化工具，用于简化日常工作流程，提高工作效率。
+这是一个基于PyQt5的工业视觉辅助系统，用于生成包含图片分析的PPT报告。系统提供了直观的图片处理界面，支持区域选择和细节放大功能。
 
-## 主要功能
+## 主要特性
 
-### 图片处理
-- 批量图片导入与管理
-- 智能ROI（感兴趣区域）提取
-- 图像细节放大与分析
-- 自动化缺陷检测与标注
-
-### 报告生成
+- 批量导入图片文件
+- 图片细节区域选择和放大
 - 自动生成PPT报告
-- 智能排版与布局
-- 批次化处理与组织
+- 支持评估意见编辑
+- 可调节的界面布局
+- 实时预览裁剪效果
 
-### 配置管理
-- 相机参数配置
-- 检测参数管理
-- 系统设置
+## 系统要求
 
-## 技术栈
+- Python 3.6+
+- PyQt5
+- python-pptx
+- Pillow
 
-- Python 3.8+
-- PyQt5 - GUI框架
-- OpenCV - 图像处理
-- python-pptx - PPT生成
-- Pillow - 图像处理
-- scikit-image - 图像分析
+## 安装步骤
 
-## 安装说明
-
-1. 克隆仓库
+1. 克隆仓库：
 ```bash
 git clone https://github.com/yourusername/industrial-vision-assistant.git
 cd industrial-vision-assistant
 ```
 
-2. 安装依赖
+2. 安装依赖：
 ```bash
 pip install -r requirements.txt
 ```
 
-3. 运行程序
+## 使用方法
+
+1. 运行程序：
 ```bash
-python main.py
+python Slide_generation.py
 ```
 
-## 使用说明
+2. 使用步骤：
+   - 点击"选择图片文件夹"导入图片
+   - 在左侧列表选择要处理的图片
+   - 编辑PPT标题
+   - 在原图区域拖动鼠标选择要放大的细节部分
+   - 在可行性分析区域输入评估意见
+   - 点击"生成PPT"按钮生成演示文稿
 
-1. 启动程序后，通过顶部菜单栏访问各项功能
-2. 在左侧面板选择并导入图片
-3. 在原图区域通过鼠标拉框选择ROI
-4. 在右侧查看放大的细节
-5. 在底部添加分析评价
-6. 使用导出功能生成报告
+## 界面说明
 
-## 项目结构
+- 左侧面板：图片文件列表
+- 右侧上方：PPT标题编辑区
+- 右侧中间：原图显示和细节图显示区（可拖动分隔条调整大小）
+- 右侧下方：评估意见输入区
+- 底部：生成PPT按钮
 
-```
-industrial-vision-assistant/
-├── src/
-│   ├── image_import/
-│   │   └── image_processor.py
-│   └── splash_screen.py
-├── resources/
-│   └── README.md
-├── main.py
-├── requirements.txt
-└── README.md
-```
+## 注意事项
 
-## 开发计划
+- 支持的图片格式：jpg、jpeg、png
+- 生成的PPT文件将保存在程序运行目录下
+- 裁剪区域会自动保持纵横比
+- 界面布局支持自由调整
 
-- [ ] 添加批量处理功能
-- [ ] 实现自动缺陷检测
-- [ ] 添加数据库支持
-- [ ] 优化用户界面
-- [ ] 添加配置导出功能
+## 开发环境
 
-## 贡献指南
-
-欢迎提交 Pull Request 或创建 Issue。
+- Python 3.8+
+- PyQt5 5.15.0
+- Windows/MacOS/Linux
 
 ## 许可证
 
 MIT License
+
+## 贡献
+
+欢迎提交Issue和Pull Request。

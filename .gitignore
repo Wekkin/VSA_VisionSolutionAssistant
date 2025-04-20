@@ -31,13 +31,18 @@ ENV/
 *.swp
 *.swo
 
-# OS
+# Operating System
 .DS_Store
 Thumbs.db
 
 # Project specific
-resources/splash_background.png
 *.pptx
+temp_*.jpg
+temp_*.jpeg
+temp_*.png
+
+# Project specific
+resources/splash_background.png
 *.jpg
 *.jpeg
 *.png
