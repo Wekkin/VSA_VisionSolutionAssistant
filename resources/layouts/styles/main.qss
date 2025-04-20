@@ -1,0 +1,143 @@
+/* 主窗口样式 */
+QMainWindow {
+    background-color: #FFFFFF;
+}
+
+/* 菜单栏样式 */
+QMenuBar {
+    background-color: #F5F5F5;
+    border-bottom: 1px solid #BDBDBD;
+    min-height: 25px;
+    font-size: 14px;
+}
+
+QMenuBar::item {
+    padding: 5px 10px;
+    margin: 0px;
+    background: transparent;
+}
+
+QMenuBar::item:selected {
+    background-color: #E3F2FD;
+    color: #1976D2;
+}
+
+QMenuBar::item:pressed {
+    background-color: #1976D2;
+    color: white;
+}
+
+/* 菜单样式 */
+QMenu {
+    background-color: #FFFFFF;
+    border: 1px solid #BDBDBD;
+    padding: 5px 0px;
+}
+
+QMenu::item {
+    padding: 8px 25px;
+    border: none;
+}
+
+QMenu::item:selected {
+    background-color: #E3F2FD;
+    color: #1976D2;
+}
+
+QMenu::separator {
+    height: 1px;
+    background: #BDBDBD;
+    margin: 5px 0px;
+}
+
+/* 状态栏样式 */
+QStatusBar {
+    background-color: #F5F5F5;
+    color: #424242;
+}
+
+/* 分组框样式 */
+QGroupBox {
+    font-weight: bold;
+    border: 1px solid #BDBDBD;
+    border-radius: 5px;
+    margin-top: 10px;
+    padding-top: 10px;
+}
+
+/* 按钮样式 */
+QPushButton {
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 5px 15px;
+    min-height: 25px;
+}
+
+QPushButton:hover {
+    background-color: #1976D2;
+}
+
+QPushButton:pressed {
+    background-color: #0D47A1;
+}
+
+/* 输入框样式 */
+QLineEdit, QTextEdit {
+    padding: 5px;
+    border: 1px solid #BDBDBD;
+    border-radius: 4px;
+    background-color: white;
+}
+
+QLineEdit:focus, QTextEdit:focus {
+    border: 2px solid #2196F3;
+}
+
+/* 列表控件样式 */
+QListWidget {
+    border: 1px solid #BDBDBD;
+    border-radius: 4px;
+    background-color: white;
+}
+
+QListWidget::item {
+    padding: 5px;
+}
+
+QListWidget::item:selected {
+    background-color: #E3F2FD;
+    color: #1976D2;
+}
+
+/* 标签样式 */
+QLabel {
+    color: #424242;
+}
+
+/* 分割器样式 */
+QSplitter::handle {
+    background-color: #BDBDBD;
+}
+
+QSplitter::handle:horizontal {
+    width: 2px;
+}
+
+QSplitter::handle:vertical {
+    height: 2px;
+}
+
+/* 进度条样式 */
+QProgressBar {
+    border: 1px solid #BDBDBD;
+    border-radius: 4px;
+    text-align: center;
+    background-color: #F5F5F5;
+}
+
+QProgressBar::chunk {
+    background-color: #2196F3;
+    border-radius: 3px;
+} 

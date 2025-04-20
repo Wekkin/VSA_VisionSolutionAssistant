@@ -1,12 +1,14 @@
 import sys
 import os
+import json
+from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
                            QHBoxLayout, QPushButton, QLabel, QFileDialog, 
                            QTabWidget, QGroupBox, QLineEdit, QMessageBox,
                            QListWidget, QProgressBar, QSplitter, QFrame,
                            QMenuBar, QMenu, QAction, QTextEdit, QRubberBand,
-                           QStatusBar)
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer, QRect, QPoint, QSize
+                           QStatusBar, QDialog, QFormLayout, QDialogButtonBox)
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer, QRect, QPoint, QSize, QSettings
 from PyQt5.QtGui import QPixmap, QImage, QCursor, QFont
 from src.image_import.image_processor import ImageProcessor
 from src.splash_screen import CustomSplashScreen
@@ -126,88 +128,107 @@ class ImageViewer(QLabel):
         
         return QRect(int(x), int(y), int(width), int(height))
 
+class NewProjectDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("新建项目")
+        self.setFixedWidth(400)
+        
+        layout = QVBoxLayout(self)
+        
+        # 添加说明标签
+        description = QLabel("请按照格式输入项目名称：公司名称+项目名称+版本\n例如：ACME_自动化检测_V1.0")
+        description.setWordWrap(True)
+        description.setStyleSheet("color: #666666; margin-bottom: 10px;")
+        layout.addWidget(description)
+        
+        # 创建表单布局
+        form_layout = QFormLayout()
+        
+        # 公司名称输入
+        self.company_name = QLineEdit()
+        self.company_name.setPlaceholderText("例如：ACME")
+        form_layout.addRow("公司名称:", self.company_name)
+        
+        # 项目名称输入
+        self.project_name = QLineEdit()
+        self.project_name.setPlaceholderText("例如：自动化检测")
+        form_layout.addRow("项目名称:", self.project_name)
+        
+        # 版本号输入
+        self.version = QLineEdit()
+        self.version.setPlaceholderText("例如：V1.0")
+        form_layout.addRow("版本号:", self.version)
+        
+        layout.addLayout(form_layout)
+        
+        # 预览
+        preview_group = QGroupBox("项目名称预览")
+        preview_layout = QVBoxLayout()
+        self.preview_label = QLabel()
+        self.preview_label.setStyleSheet("color: #1976D2; font-weight: bold;")
+        preview_layout.addWidget(self.preview_label)
+        preview_group.setLayout(preview_layout)
+        layout.addWidget(preview_group)
+        
+        # 连接信号
+        self.company_name.textChanged.connect(self.update_preview)
+        self.project_name.textChanged.connect(self.update_preview)
+        self.version.textChanged.connect(self.update_preview)
+        
+        # 按钮
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel,
+            Qt.Horizontal, self)
+        button_box.accepted.connect(self.validate_and_accept)
+        button_box.rejected.connect(self.reject)
+        layout.addWidget(button_box)
+        
+    def update_preview(self):
+        """更新预览"""
+        preview = f"{self.company_name.text()}_{self.project_name.text()}_{self.version.text()}"
+        self.preview_label.setText(preview)
+        
+    def validate_and_accept(self):
+        """验证输入并接受"""
+        if not self.company_name.text().strip():
+            QMessageBox.warning(self, "警告", "请输入公司名称")
+            self.company_name.setFocus()
+            return
+            
+        if not self.project_name.text().strip():
+            QMessageBox.warning(self, "警告", "请输入项目名称")
+            self.project_name.setFocus()
+            return
+            
+        if not self.version.text().strip():
+            QMessageBox.warning(self, "警告", "请输入版本号")
+            self.version.setFocus()
+            return
+            
+        self.accept()
+        
+    def get_project_name(self):
+        """获取完整的项目名称"""
+        return f"{self.company_name.text()}_{self.project_name.text()}_{self.version.text()}"
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("工业视觉检测办公助手")
+        self.setWindowTitle("POC Assistant")
         self.setGeometry(100, 100, 1200, 800)
         
+        # 初始化设置
+        self.settings = QSettings('POCAssistant', 'Settings')
+        
+        # 加载样式表
+        self.load_stylesheet()
+        
         # 创建状态栏
-        self.statusBar().showMessage("就绪")
+        self.statusBar().showMessage("Ready")
         
         # 创建并设置菜单栏
         self.create_menu_bar()
-        
-        # 设置窗口样式
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #FFFFFF;
-            }
-            QMenuBar {
-                background-color: #F5F5F5;
-                border-bottom: 1px solid #BDBDBD;
-                min-height: 25px;
-                font-size: 14px;
-            }
-            QMenuBar::item {
-                padding: 5px 10px;
-                margin: 0px;
-                background: transparent;
-            }
-            QMenuBar::item:selected {
-                background-color: #E3F2FD;
-                color: #1976D2;
-            }
-            QMenuBar::item:pressed {
-                background-color: #1976D2;
-                color: white;
-            }
-            QMenu {
-                background-color: #FFFFFF;
-                border: 1px solid #BDBDBD;
-                padding: 5px 0px;
-            }
-            QMenu::item {
-                padding: 8px 25px;
-                border: none;
-            }
-            QMenu::item:selected {
-                background-color: #E3F2FD;
-                color: #1976D2;
-            }
-            QMenu::separator {
-                height: 1px;
-                background: #BDBDBD;
-                margin: 5px 0px;
-            }
-            QStatusBar {
-                background-color: #F5F5F5;
-                color: #424242;
-            }
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #BDBDBD;
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 10px;
-            }
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                border-radius: 4px;
-                padding: 5px 15px;
-                min-height: 25px;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-            QLineEdit, QTextEdit {
-                padding: 5px;
-                border: 1px solid #BDBDBD;
-                border-radius: 4px;
-            }
-        """)
         
         # 初始化图片处理器
         self.image_processor = ImageProcessor()
@@ -217,32 +238,43 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(central_widget)
         
         # 创建主布局
-        main_layout = QVBoxLayout(central_widget)  # 改为垂直布局
+        main_layout = QVBoxLayout(central_widget)
         
-        # 创建水平分割器用于左右面板
+        # 创建水平分割器
         hsplitter = QSplitter(Qt.Horizontal)
         
-        # 创建左侧图片导入区域
+        # 创建左侧面板
         left_panel = self.create_left_panel()
         
-        # 创建右侧显示区域
+        # 创建右侧面板
         right_panel = self.create_right_panel()
         
         # 添加面板到分割器
         hsplitter.addWidget(left_panel)
         hsplitter.addWidget(right_panel)
-        hsplitter.setStretchFactor(0, 1)  # 左侧面板
-        hsplitter.setStretchFactor(1, 3)  # 右侧面板
+        hsplitter.setStretchFactor(0, 1)
+        hsplitter.setStretchFactor(1, 2)
         
         # 添加分割器到主布局
         main_layout.addWidget(hsplitter)
         
         # 设置主布局的边距
         main_layout.setContentsMargins(5, 5, 5, 5)
+        
+        # 加载默认设置
+        self.load_settings()
+
+    def load_settings(self):
+        """加载应用程序设置"""
+        default_project_path = self.settings.value('default_project_path', '')
+        if default_project_path:
+            self.default_project_path = default_project_path
+        else:
+            self.default_project_path = os.path.expanduser('~/Documents/POC_Projects')
+            self.settings.setValue('default_project_path', self.default_project_path)
 
     def create_menu_bar(self):
         """创建菜单栏"""
-        # 创建菜单栏
         menubar = self.menuBar()
         menubar.setNativeMenuBar(False)  # 在 macOS 上禁用原生菜单栏
         
@@ -253,57 +285,211 @@ class MainWindow(QMainWindow):
         
         # 文件菜单
         file_menu = menubar.addMenu('文件')
-        new_action = QAction('新建项目', self)
-        new_action.setShortcut('Ctrl+N')
-        file_menu.addAction(new_action)
         
-        open_action = QAction('打开项目', self)
-        open_action.setShortcut('Ctrl+O')
-        file_menu.addAction(open_action)
+        new_project_action = QAction('新建项目', self)
+        new_project_action.setShortcut('Ctrl+N')
+        new_project_action.triggered.connect(self.create_new_project)
+        file_menu.addAction(new_project_action)
         
-        save_action = QAction('保存项目', self)
-        save_action.setShortcut('Ctrl+S')
-        file_menu.addAction(save_action)
+        open_project_action = QAction('打开项目', self)
+        open_project_action.setShortcut('Ctrl+O')
+        open_project_action.triggered.connect(self.open_project)
+        file_menu.addAction(open_project_action)
+        
+        save_project_action = QAction('保存项目', self)
+        save_project_action.setShortcut('Ctrl+S')
+        save_project_action.triggered.connect(self.save_project)
+        file_menu.addAction(save_project_action)
         
         file_menu.addSeparator()
         
-        exit_action = QAction('退出', self)
-        exit_action.setShortcut('Ctrl+Q')
-        file_menu.addAction(exit_action)
+        default_path_action = QAction('默认位置', self)
+        default_path_action.triggered.connect(self.set_default_path)
+        file_menu.addAction(default_path_action)
         
         # 功能菜单
         function_menu = menubar.addMenu('功能')
-        function_menu.addAction('图片导入')
-        function_menu.addAction('批量处理')
         
-        # POC菜单
-        poc_menu = menubar.addMenu('POC')
-        poc_menu.addAction('新建POC')
-        poc_menu.addAction('POC列表')
+        # POC报告功能
+        poc_report_action = QAction('POC报告', self)
+        poc_report_action.triggered.connect(self.open_poc_report)
+        function_menu.addAction(poc_report_action)
         
-        # 缺陷菜单
-        defect_menu = menubar.addMenu('缺陷')
-        defect_menu.addAction('缺陷库')
-        defect_menu.addAction('缺陷分析')
+        # 缺陷生成功能
+        defect_gen_action = QAction('缺陷生成', self)
+        defect_gen_action.triggered.connect(self.open_defect_generation)
+        function_menu.addAction(defect_gen_action)
+        
+        # 配置清单功能
+        config_list_action = QAction('配置清单', self)
+        config_list_action.triggered.connect(self.open_config_list)
+        function_menu.addAction(config_list_action)
         
         # 配置菜单
         config_menu = menubar.addMenu('配置')
-        config_menu.addAction('相机参数')
-        config_menu.addAction('系统设置')
         
-        # 集成菜单
-        integration_menu = menubar.addMenu('集成')
-        integration_menu.addAction('导出方案')
-        integration_menu.addAction('部署配置')
+        # 配置清单子菜单
+        config_items_menu = QMenu('配置清单', self)
+        config_items_menu.addAction('相机参数')
+        config_items_menu.addAction('镜头参数')
+        config_items_menu.addAction('光源参数')
+        config_menu.addMenu(config_items_menu)
         
-        # 其他菜单
-        other_menu = menubar.addMenu('其他')
+        # 其他功能菜单
+        other_menu = menubar.addMenu('其他功能')
+        extend_action = QAction('拓展功能', self)
+        extend_action.triggered.connect(self.open_extensions)
+        other_menu.addAction(extend_action)
         
-        # 帮助菜单
-        help_menu = menubar.addMenu('帮助')
-        help_menu.addAction('使用说明')
-        about_action = QAction('关于', self)
-        help_menu.addAction(about_action)
+        # 方案总结菜单
+        solution_menu = menubar.addMenu('方案总结')
+        industry_action = QAction('行业方案', self)
+        industry_action.triggered.connect(self.open_industry_solutions)
+        solution_menu.addAction(industry_action)
+
+    def create_new_project(self):
+        """创建新项目"""
+        # 检查是否已设置默认路径
+        default_path = self.settings.value('default_project_path')
+        if not default_path:
+            reply = QMessageBox.question(self, "提示", 
+                "您还未设置默认项目路径，是否现在设置？",
+                QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.set_default_path()
+                default_path = self.settings.value('default_project_path')
+                if not default_path:  # 用户取消了路径选择
+                    return
+            else:
+                return
+
+        # 创建新项目对话框
+        dialog = NewProjectDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            project_name = dialog.get_project_name()
+            project_path = os.path.join(default_path, project_name)
+            
+            # 检查项目文件夹是否已存在
+            if os.path.exists(project_path):
+                reply = QMessageBox.question(self, "警告", 
+                    f"项目文件夹 '{project_name}' 已存在，是否覆盖？",
+                    QMessageBox.Yes | QMessageBox.No)
+                if reply == QMessageBox.No:
+                    return
+            
+            try:
+                # 创建项目目录结构
+                os.makedirs(project_path, exist_ok=True)
+                os.makedirs(os.path.join(project_path, "images"), exist_ok=True)
+                os.makedirs(os.path.join(project_path, "config"), exist_ok=True)
+                os.makedirs(os.path.join(project_path, "RFQ"), exist_ok=True)
+                
+                # 创建项目配置文件
+                self.create_project_config(project_path, project_name)
+                
+                # 创建README文件
+                self.create_readme(project_path, project_name)
+                
+                # 更新当前项目路径
+                self.current_project_path = project_path
+                self.settings.setValue('last_project', project_path)
+                
+                QMessageBox.information(self, "成功", 
+                    f"项目 '{project_name}' 创建成功！\n"
+                    f"位置：{project_path}\n\n"
+                    f"已创建以下文件夹：\n"
+                    f"- images/：存储项目相关图片\n"
+                    f"- config/：存储配置文件\n"
+                    f"- RFQ/：存储RFQ文档")
+                
+            except Exception as e:
+                QMessageBox.critical(self, "错误", f"创建项目失败：{str(e)}")
+    
+    def create_project_config(self, project_path, project_name):
+        """创建项目配置文件"""
+        config = {
+            "project_name": project_name,
+            "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "last_modified": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "project_path": project_path,
+            "image_path": os.path.join(project_path, "images"),
+            "config_path": os.path.join(project_path, "config"),
+            "rfq_path": os.path.join(project_path, "RFQ")
+        }
+        
+        config_file = os.path.join(project_path, "config", "project_config.json")
+        with open(config_file, 'w', encoding='utf-8') as f:
+            json.dump(config, f, ensure_ascii=False, indent=4)
+    
+    def create_readme(self, project_path, project_name):
+        """创建项目README文件"""
+        readme_content = f"""# {project_name}
+
+## 项目结构
+```
+{project_name}/
+├── images/     # 图片文件夹
+├── config/     # 配置文件夹
+└── RFQ/        # RFQ文档文件夹
+```
+
+## 文件夹说明
+- images: 存储项目相关的所有图片文件
+- config: 存储项目配置文件
+- RFQ: 存储项目相关的RFQ文档
+
+## 创建日期
+{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+"""
+        
+        readme_file = os.path.join(project_path, "README.md")
+        with open(readme_file, 'w', encoding='utf-8') as f:
+            f.write(readme_content)
+
+    def open_project(self):
+        """打开现有项目"""
+        project_dir = QFileDialog.getExistingDirectory(self, "选择项目文件夹")
+        if project_dir:
+            # TODO: 实现项目加载逻辑
+            pass
+
+    def save_project(self):
+        """保存当前项目"""
+        # TODO: 实现项目保存逻辑
+        pass
+
+    def set_default_path(self):
+        """设置默认项目路径"""
+        default_path = QFileDialog.getExistingDirectory(self, "选择默认项目路径", 
+            self.settings.value('default_project_path', os.path.expanduser('~/Documents/POC_Projects')))
+        if default_path:
+            self.settings.setValue('default_project_path', default_path)
+            QMessageBox.information(self, "成功", f"默认项目路径已设置为：\n{default_path}")
+
+    def open_poc_report(self):
+        """打开POC报告功能"""
+        # TODO: 实现POC报告功能
+        pass
+
+    def open_defect_generation(self):
+        """打开缺陷生成功能"""
+        # TODO: 实现缺陷生成功能
+        pass
+
+    def open_config_list(self):
+        """打开配置清单功能"""
+        # TODO: 实现配置清单功能
+        pass
+
+    def open_extensions(self):
+        """打开拓展功能"""
+        # TODO: 实现拓展功能
+        pass
+
+    def open_industry_solutions(self):
+        """打开行业方案"""
+        # TODO: 实现行业方案功能
+        pass
 
     def create_left_panel(self):
         """创建左侧图片导入面板"""
@@ -399,6 +585,25 @@ class MainWindow(QMainWindow):
             Qt.SmoothTransformation
         ))
 
+    def load_stylesheet(self):
+        """加载应用程序样式表"""
+        style_path = os.path.join('resources', 'layouts', 'styles', 'main.qss')
+        try:
+            with open(style_path, 'r') as f:
+                self.setStyleSheet(f.read())
+        except Exception as e:
+            print(f"加载样式表失败: {str(e)}")
+            # 使用默认样式
+            self.setStyleSheet("""
+                QMainWindow {
+                    background-color: #FFFFFF;
+                }
+                QMenuBar {
+                    background-color: #F5F5F5;
+                    border-bottom: 1px solid #BDBDBD;
+                }
+            """)
+
 def main():
     app = QApplication(sys.argv)
     
@@ -409,6 +614,13 @@ def main():
     splash = CustomSplashScreen()
     splash.show()
     
+    # 设置启动界面位置居中
+    screen = app.primaryScreen().geometry()
+    splash_geometry = splash.geometry()
+    x = (screen.width() - splash_geometry.width()) // 2
+    y = (screen.height() - splash_geometry.height()) // 2
+    splash.move(x, y)
+    
     # 创建主窗口
     window = MainWindow()
     
@@ -417,6 +629,12 @@ def main():
         if not splash.progress():
             # 加载完成，显示主窗口
             window.show()
+            # 设置主窗口位置居中
+            window_geometry = window.geometry()
+            x = (screen.width() - window_geometry.width()) // 2
+            y = (screen.height() - window_geometry.height()) // 2
+            window.move(x, y)
+            # 关闭启动界面
             splash.finish(window)
             timer.stop()
     

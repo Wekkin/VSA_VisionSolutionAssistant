@@ -41,4 +41,13 @@ resources/splash_background.png
 *.jpg
 *.jpeg
 *.png
-*.bmp 
+*.bmp
+*.log
+resources/templates/*
+!resources/templates/README.md
+resources/layouts/backgrounds/*
+!resources/layouts/backgrounds/.gitkeep
+resources/camera_data/*
+!resources/camera_data/README.md
+resources/integration_schemes/*
+!resources/integration_schemes/README.md 
