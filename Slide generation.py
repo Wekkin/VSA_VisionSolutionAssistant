@@ -7,7 +7,7 @@ from pptx.util import Inches, Pt
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                              QFileDialog, QListWidget, QPushButton, QLabel, QTextEdit,
                              QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsRectItem,
-                             QSplitter)
+                             QSplitter, QMessageBox)
 from PyQt5.QtCore import Qt, QRectF, QPoint
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor
 
@@ -396,36 +396,49 @@ class PPTGeneratorApp(QMainWindow):
 
     def generate_ppt(self):
         self.save_current_data()
-        prs = Presentation()
-        slide_width = Inches(13.33)
-        slide_height = Inches(7.5)
-        prs.slide_width = slide_width
-        prs.slide_height = slide_height
+        
+        # 使用模板文件创建演示文稿
+        template_path = os.path.join("src", "template.pptx")
+        if not os.path.exists(template_path):
+            QMessageBox.warning(self, "警告", "未找到模板文件！")
+            return
+            
+        prs = Presentation(template_path)
+        # 获取模板的幻灯片尺寸
+        slide_width = prs.slide_width
+        slide_height = prs.slide_height
 
         for rel_path, data in self.image_data.items():
-            slide = prs.slides.add_slide(prs.slide_layouts[6])
+            # 使用模板的布局创建新幻灯片
+            slide = prs.slides.add_slide(prs.slide_layouts[10])  # 使用第10个布局
 
-            # 添加标题
-            title = slide.shapes.add_textbox(Inches(0.5), Inches(0.2),
-                                           slide_width - Inches(1), Inches(0.8))
-            title.text_frame.text = data['folder']
+            # 添加标题（如果布局中没有标题占位符，则创建一个）
+            if slide.shapes.title is None:
+                title = slide.shapes.add_textbox(
+                    Inches(2.3), Inches(0.5),# 左侧边距增加到2英寸，顶部边距增加到0.5英寸
+                    slide_width - Inches(3), Inches(0.5)# 宽度不变，高度减小到0.5英寸
+                )
+                title.text_frame.text = data['folder']
+            else:
+                slide.shapes.title.text = data['folder']
 
             try:
                 # 获取图片实际尺寸
                 with Image.open(data['full_path']) as img:
                     img_width, img_height = img.size
                     # 计算合适的显示高度（保持宽高比）
-                    target_height = Inches(3.5)
+                    target_height = Inches(3)  # 增加图片高度
                     # 计算对应的宽度
                     target_width = target_height * (img_width / img_height)
                     
                     # 设置固定的左侧边距，使图片靠左显示
-                    left = Inches(0.4)  # 设置固定的左侧边距为0.4英寸
+                    left = Inches(0.5)  # 增加左侧边距
+                    top = Inches(1.8)   # 增加顶部边距
                     
                     # 添加原图（靠左显示）
                     original_img = slide.shapes.add_picture(
                         data['full_path'],
-                        left, Inches(1.5),
+                        left, top,
                         height=target_height
                     )
 
@@ -438,32 +451,45 @@ class PPTGeneratorApp(QMainWindow):
 
                         # 计算裁剪图的合适大小
                         crop_width, crop_height = cropped.size
-                        crop_target_height = Inches(3)
+                        crop_target_height = Inches(4)  # 增加裁剪图高度
                         crop_target_width = crop_target_height * (crop_width / crop_height)
                         
                         # 计算右侧位置
                         crop_left = slide_width - crop_target_width - Inches(0.5)
+                        crop_top = top  # 与原图顶部对齐
                         
                         slide.shapes.add_picture(
                             temp_path,
-                            crop_left, Inches(1.5),
+                            crop_left, crop_top,
                             height=crop_target_height
                         )
                         os.remove(temp_path)
 
                 # 添加评估意见
-                comment_box = slide.shapes.add_textbox(
-                    Inches(0.3), Inches(6),
-                    slide_width - Inches(1), Inches(1)
-                )
-                comment_box.text_frame.text = data['comment']
+                # 在模板中预留一个文本框用于评估意见
+                comment_added = False
+                for shape in slide.shapes:
+                    if shape.has_text_frame and shape.text_frame.text == "评估意见":
+                        shape.text_frame.text = data['comment']
+                        comment_added = True
+                        break
+                
+                # 如果没有找到评估意见文本框，创建一个新的
+                if not comment_added:
+                    comment_box = slide.shapes.add_textbox(
+                        Inches(0.5), Inches(5.2),  # 调整文本框位置
+                        slide_width - Inches(1), Inches(0.3)  # 增加文本框高度
+                    )
+                    comment_box.text_frame.text = data['comment']
 
             except Exception as e:
                 print(f"Error processing {rel_path}: {str(e)}")
                 continue
 
-        prs.save("AutoGenerated_Presentation.pptx")
-        self.statusBar().showMessage("PPT生成完成！", 5000)
+        # 保存生成的PPT
+        output_path = "AutoGenerated_Presentation.pptx"
+        prs.save(output_path)
+        self.statusBar().showMessage(f"PPT生成完成！保存至：{output_path}", 5000)
 
 
 if __name__ == '__main__':
