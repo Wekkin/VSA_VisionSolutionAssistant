@@ -208,7 +208,7 @@ class PPTGeneratorApp(QMainWindow):
         left_layout.setContentsMargins(5, 5, 5, 5)
         
         file_list_label = QLabel("图片导入")
-        file_list_label.setStyleSheet("font-size: 10px; font-weight: bold; padding: 5px;")
+        file_list_label.setStyleSheet("font-size: 15px; font-weight: bold; padding: 5px;")
         
         self.btn_load = QPushButton("选择图片文件夹")
         self.btn_load.clicked.connect(self.load_folders)
@@ -233,9 +233,9 @@ class PPTGeneratorApp(QMainWindow):
         title_layout = QHBoxLayout(title_widget)
         title_layout.setContentsMargins(5, 5, 5, 5)
         title_label = QLabel("PPT标题")
-        title_label.setStyleSheet("font-size: 10px; font-weight: bold;")
+        title_label.setStyleSheet("font-size: 15px; font-weight: bold;")
         self.title_edit = QTextEdit()
-        self.title_edit.setMaximumHeight(25)
+        self.title_edit.setMaximumHeight(35)
         title_layout.addWidget(title_label)
         title_layout.addWidget(self.title_edit)
 
@@ -248,7 +248,7 @@ class PPTGeneratorApp(QMainWindow):
         original_layout = QVBoxLayout(original_widget)
         original_layout.setContentsMargins(5, 5, 5, 5)
         original_label = QLabel("原图展示")
-        original_label.setStyleSheet("font-size: 10px; font-weight: bold; text-align: center;")
+        original_label.setStyleSheet("font-size: 15px; font-weight: bold; text-align: center;")
         self.image_processor = ImageProcessor()
         original_layout.addWidget(original_label)
         original_layout.addWidget(self.image_processor)
@@ -258,7 +258,7 @@ class PPTGeneratorApp(QMainWindow):
         detail_layout = QVBoxLayout(detail_widget)
         detail_layout.setContentsMargins(5, 5, 5, 5)
         detail_label = QLabel("细节放大")
-        detail_label.setStyleSheet("font-size: 10px; font-weight: bold; text-align: center;")
+        detail_label.setStyleSheet("font-size: 15px; font-weight: bold; text-align: center;")
         self.detail_view = DetailViewer()
         detail_layout.addWidget(detail_label)
         detail_layout.addWidget(self.detail_view)
@@ -274,7 +274,7 @@ class PPTGeneratorApp(QMainWindow):
         analysis_layout = QVBoxLayout(analysis_widget)
         analysis_layout.setContentsMargins(5, 5, 5, 5)
         analysis_label = QLabel("可行性分析")
-        analysis_label.setStyleSheet("font-size: 10px; font-weight: bold;")
+        analysis_label.setStyleSheet("font-size: 15px; font-weight: bold;")
         self.comment_edit = QTextEdit()
         self.comment_edit.setPlaceholderText("在此输入评估意见...")
         analysis_layout.addWidget(analysis_label)
@@ -434,7 +434,7 @@ class PPTGeneratorApp(QMainWindow):
 
                 # 添加评估意见
                 comment_box = slide.shapes.add_textbox(
-                    Inches(0.5), Inches(6),
+                    Inches(0.3), Inches(6),
                     slide_width - Inches(1), Inches(1)
                 )
                 comment_box.text_frame.text = data['comment']
