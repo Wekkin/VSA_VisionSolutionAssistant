@@ -411,12 +411,23 @@ class PPTGeneratorApp(QMainWindow):
             title.text_frame.text = data['folder']
 
             try:
-                # 添加原图（左侧）
-                original_img = slide.shapes.add_picture(
-                    data['full_path'],
-                    Inches(0.5), Inches(1.5),
-                    width=Inches(6), height=Inches(4)
-                )
+                # 获取图片实际尺寸
+                with Image.open(data['full_path']) as img:
+                    img_width, img_height = img.size
+                    # 计算合适的显示高度（保持宽高比）
+                    target_height = Inches(3.5)
+                    # 计算对应的宽度
+                    target_width = target_height * (img_width / img_height)
+                    
+                    # 设置固定的左侧边距，使图片靠左显示
+                    left = Inches(0.4)  # 设置固定的左侧边距为0.4英寸
+                    
+                    # 添加原图（靠左显示）
+                    original_img = slide.shapes.add_picture(
+                        data['full_path'],
+                        left, Inches(1.5),
+                        height=target_height
+                    )
 
                 # 添加裁剪图（右侧）
                 if data['crop_area']:
@@ -425,10 +436,18 @@ class PPTGeneratorApp(QMainWindow):
                         temp_path = f"temp_{Path(rel_path).name}"
                         cropped.save(temp_path)
 
+                        # 计算裁剪图的合适大小
+                        crop_width, crop_height = cropped.size
+                        crop_target_height = Inches(3)
+                        crop_target_width = crop_target_height * (crop_width / crop_height)
+                        
+                        # 计算右侧位置
+                        crop_left = slide_width - crop_target_width - Inches(0.5)
+                        
                         slide.shapes.add_picture(
                             temp_path,
-                            Inches(7), Inches(1.5),
-                            width=Inches(5), height=Inches(3.75)
+                            crop_left, Inches(1.5),
+                            height=crop_target_height
                         )
                         os.remove(temp_path)
 
