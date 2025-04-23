@@ -37,6 +37,7 @@ Thumbs.db
 
 # Project specific
 *.pptx
+!src/template.pptx
 temp_*.jpg
 temp_*.jpeg
 temp_*.png
