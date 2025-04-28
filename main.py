@@ -1,5 +1,10 @@
 import sys
 import os
+
+# 设置 Qt 环境变量
+os.environ['QT_DEBUG_PLUGINS'] = '1'
+os.environ['QT_QPA_PLATFORM'] = 'minimal'
+
 import json
 from datetime import datetime
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, 
@@ -604,45 +609,28 @@ class MainWindow(QMainWindow):
                 }
             """)
 
+def update_splash(splash):
+    """更新启动画面并启动主窗口"""
+    # 创建并显示主窗口
+    window = MainWindow()
+    window.show()
+    
+    # 关闭启动画面
+    splash.finish(window)
+
 def main():
+    # 创建应用程序实例
     app = QApplication(sys.argv)
+    print("QApplication created successfully")
     
-    # 设置应用程序样式
-    app.setStyle('Fusion')
-    
-    # 创建启动界面
+    # 显示启动画面
     splash = CustomSplashScreen()
     splash.show()
     
-    # 设置启动界面位置居中
-    screen = app.primaryScreen().geometry()
-    splash_geometry = splash.geometry()
-    x = (screen.width() - splash_geometry.width()) // 2
-    y = (screen.height() - splash_geometry.height()) // 2
-    splash.move(x, y)
+    # 使用定时器延迟主窗口的创建
+    QTimer.singleShot(2000, lambda: update_splash(splash))
     
-    # 创建主窗口
-    window = MainWindow()
-    
-    # 模拟加载过程
-    def update_splash():
-        if not splash.progress():
-            # 加载完成，显示主窗口
-            window.show()
-            # 设置主窗口位置居中
-            window_geometry = window.geometry()
-            x = (screen.width() - window_geometry.width()) // 2
-            y = (screen.height() - window_geometry.height()) // 2
-            window.move(x, y)
-            # 关闭启动界面
-            splash.finish(window)
-            timer.stop()
-    
-    # 设置定时器更新进度
-    timer = QTimer()
-    timer.timeout.connect(update_splash)
-    timer.start(30)  # 每30毫秒更新一次
-    
+    # 运行应用程序
     sys.exit(app.exec_())
 
 if __name__ == "__main__":
