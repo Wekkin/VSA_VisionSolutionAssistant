@@ -1,76 +1,78 @@
-# 工业视觉辅助系统
+# 视觉方案助手 (Vision Solution Assistant)
 
-这是一个基于PyQt5的工业视觉辅助系统，用于生成包含图片分析的PPT报告。系统提供了直观的图片处理界面，支持区域选择和细节放大功能。
+一个用于辅助视觉方案设计和管理的桌面应用程序。
 
-## 主要特性
+## 功能特点
 
-- 批量导入图片文件
-- 图片细节区域选择和放大
-- 自动生成PPT报告
-- 支持评估意见编辑
-- 可调节的界面布局
-- 实时预览裁剪效果
+- 项目管理：管理和追踪视觉项目的进度
+- POC制作：快速生成视觉方案的概念验证
+- 配置记录：记录和管理视觉系统的配置信息
+- 集成分析：分析视觉系统的集成方案
+- 功能拓展：支持插件式功能扩展
 
-## 系统要求
+## 技术栈
 
-- Python 3.6+
-- PyQt5
-- python-pptx
-- Pillow
+- Python 3.8+
+- PyQt5：用户界面框架
+- SQLite：本地数据存储
+- Logging：日志记录
 
-## 安装步骤
+## 安装说明
 
 1. 克隆仓库：
 ```bash
-git clone https://github.com/yourusername/industrial-vision-assistant.git
-cd industrial-vision-assistant
+git clone https://github.com/[your-username]/VSA_VisionSolutionAssistant.git
+cd VSA_VisionSolutionAssistant
 ```
 
-2. 安装依赖：
+2. 创建虚拟环境：
 ```bash
-pip install -r requirements.txt
+python -m venv vsa_env
+source vsa_env/bin/activate  # Linux/Mac
+# 或
+vsa_env\Scripts\activate  # Windows
 ```
 
-## 使用方法
-
-1. 运行程序：
+3. 安装依赖：
 ```bash
-python Slide_generation.py
+pip install -e .
 ```
 
-2. 使用步骤：
-   - 点击"选择图片文件夹"导入图片
-   - 在左侧列表选择要处理的图片
-   - 编辑PPT标题
-   - 在原图区域拖动鼠标选择要放大的细节部分
-   - 在可行性分析区域输入评估意见
-   - 点击"生成PPT"按钮生成演示文稿
+4. 运行程序：
+```bash
+python main.py
+```
 
-## 界面说明
+## 项目结构
 
-- 左侧面板：图片文件列表
-- 右侧上方：PPT标题编辑区
-- 右侧中间：原图显示和细节图显示区（可拖动分隔条调整大小）
-- 右侧下方：评估意见输入区
-- 底部：生成PPT按钮
+```
+VSA_VisionSolutionAssistant/
+├── core/               # 核心业务逻辑
+├── UI/                 # 用户界面
+├── utils/             # 工具类
+├── models/            # 数据模型
+├── resources/         # 资源文件
+├── logs/              # 日志文件
+├── main.py            # 程序入口
+├── setup.py           # 安装配置
+└── README.md          # 项目说明
+```
 
-## 注意事项
+## 开发说明
 
-- 支持的图片格式：jpg、jpeg、png
-- 生成的PPT文件将保存在程序运行目录下
-- 裁剪区域会自动保持纵横比
-- 界面布局支持自由调整
+- 遵循PEP 8编码规范
+- 使用类型提示
+- 编写单元测试
+- 保持代码文档更新
 
-## 开发环境
+## 贡献指南
 
-- Python 3.8+
-- PyQt5 5.15.0
-- Windows/MacOS/Linux
+1. Fork 项目
+2. 创建特性分支
+3. 提交更改
+4. 推送到分支
+5. 创建 Pull Request
 
 ## 许可证
 
-MIT License
-
-## 贡献
-
-欢迎提交Issue和Pull Request。
+[MIT License](LICENSE)
