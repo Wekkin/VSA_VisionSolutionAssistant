@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                            QMessageBox)
 from PyQt5.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QIcon, QPixmap, QPalette, QColor, QFont
+from utils.logger import Logger
 
 class SidebarButton(QPushButton):
     def __init__(self, text, icon_path=None, parent=None):
@@ -42,9 +43,10 @@ class ProjectCard(QFrame):
                 background-color: white;
                 border-radius: 8px;
                 border: 1px solid #e8e8e8;
+                margin: 5px;
             }
             QFrame:hover {
-                border-color: #1890ff;
+                border: 2px solid #1890ff;
             }
         """)
 
@@ -99,6 +101,8 @@ class ProjectCard(QFrame):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        self.logger = Logger()
+        self.logger.info("初始化主窗口")
         self.sidebar_expanded = True
         self.stacked_widget = QStackedWidget()  # 添加堆叠窗口部件
         self.poc_generator = None  # POC生成器实例
@@ -106,6 +110,7 @@ class MainWindow(QMainWindow):
         self.integration_analyzer = None  # 添加集成分析实例变量
         self.extensions_window = None     # 添加功能拓展实例变量
         self.initUI()
+        self.logger.info("主窗口初始化完成")
         
     def initUI(self):
         self.setWindowTitle('视觉方案助手')
@@ -350,6 +355,7 @@ class MainWindow(QMainWindow):
         self.stacked_widget.setCurrentIndex(0)
 
     def show_poc_page(self):
+        self.logger.info("切换到POC制作页面")
         # 取消其他按钮的选中状态
         self.project_btn.setChecked(False)
         self.analysis_btn.setChecked(False)
@@ -359,7 +365,7 @@ class MainWindow(QMainWindow):
         
         # 如果POC生成器页面不存在，创建它
         if not self.poc_generator:
-            from UI_POCGenerator import POCGenerator
+            from UI.UI_POCGenerator import POCGenerator
             self.poc_generator = POCGenerator()
             self.stacked_widget.addWidget(self.poc_generator)
         
@@ -367,6 +373,7 @@ class MainWindow(QMainWindow):
         self.stacked_widget.setCurrentWidget(self.poc_generator)
 
     def show_config_page(self):
+        self.logger.info("切换到配置记录页面")
         # 取消其他按钮的选中状态
         self.project_btn.setChecked(False)
         self.poc_btn.setChecked(False)
@@ -376,7 +383,7 @@ class MainWindow(QMainWindow):
         
         # 如果配置记录页面不存在，创建它
         if not self.config_recorder:
-            from UI_ConfigurationRecorder import ConfigurationRecorder
+            from UI.UI_ConfigurationRecorder import ConfigurationRecorder
             self.config_recorder = ConfigurationRecorder()
             self.stacked_widget.addWidget(self.config_recorder)
         
@@ -384,6 +391,7 @@ class MainWindow(QMainWindow):
         self.stacked_widget.setCurrentWidget(self.config_recorder)
 
     def show_integration_page(self):
+        self.logger.info("切换到集成分析页面")
         # 取消其他按钮的选中状态
         self.project_btn.setChecked(False)
         self.poc_btn.setChecked(False)
@@ -393,7 +401,7 @@ class MainWindow(QMainWindow):
         
         # 如果集成分析页面不存在，创建它
         if not self.integration_analyzer:
-            from UI_IntegrationAnalyzer import IntegrationAnalyzer
+            from UI.UI_IntegrationAnalyzer import IntegrationAnalyzer
             self.integration_analyzer = IntegrationAnalyzer()
             self.stacked_widget.addWidget(self.integration_analyzer)
         
@@ -401,17 +409,17 @@ class MainWindow(QMainWindow):
         self.stacked_widget.setCurrentWidget(self.integration_analyzer)
 
     def show_extensions_page(self):
+        self.logger.info("切换到功能拓展页面")
         # 取消其他按钮的选中状态
         self.project_btn.setChecked(False)
         self.poc_btn.setChecked(False)
         self.analysis_btn.setChecked(False)
         self.config_btn.setChecked(False)
         self.integration_btn.setChecked(False)
-        self.feature_btn.setChecked(False)
         
         # 如果功能拓展页面不存在，创建它
         if not self.extensions_window:
-            from UI_Extensions import ExtensionsWindow
+            from UI.UI_Extensions import ExtensionsWindow
             # 由于ExtensionsWindow是QMainWindow，我们需要创建一个QWidget来包装它
             container = QWidget()
             layout = QVBoxLayout(container)
@@ -423,6 +431,7 @@ class MainWindow(QMainWindow):
         self.stacked_widget.setCurrentWidget(self.extensions_window.parent())
 
     def show_analysis_page(self):
+        self.logger.info("尝试访问开发中的缺陷分析功能")
         # 显示"功能开发中"的提示框
         QMessageBox.information(self, 
                               "功能开发中", 

@@ -24,6 +24,7 @@ wheels/
 venv/
 env/
 ENV/
+vsa_env/
 
 # IDE
 .idea/
@@ -56,4 +57,12 @@ resources/layouts/backgrounds/*
 resources/camera_data/*
 !resources/camera_data/README.md
 resources/integration_schemes/*
-!resources/integration_schemes/README.md 
+!resources/integration_schemes/README.md
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite3 
