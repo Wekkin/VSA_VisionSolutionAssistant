@@ -9,7 +9,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QGraphicsRectItem,
                              QSplitter, QMessageBox)
 from PyQt5.QtCore import Qt, QRectF, QPoint
-from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor
+from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor, QPen
 
 
 class ImageProcessor(QGraphicsView):
@@ -22,37 +22,56 @@ class ImageProcessor(QGraphicsView):
         self.current_pixmap = None
         self.cropped_pixmap = None
         self.current_image_path = None
+        self.pixmap_item = None
         self.setRenderHint(QPainter.Antialiasing)
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setRenderHint(QPainter.SmoothPixmapTransform)
-        self.crop_completed = None  # 回调函数
+        self.crop_completed = None
+        self.crop_area = None
+        self.scale_factor = 1.0
+        
+        # 设置场景背景
+        self.setStyleSheet("""
+            QGraphicsView {
+                border: 1px solid #cccccc;
+                background: white;
+            }
+        """)
 
     def resizeEvent(self, event):
+        """窗口大小改变事件"""
         super().resizeEvent(event)
         self.adjust_image()
         if self.cropped_pixmap and self.crop_completed:
             self.crop_completed()  # 调用回调函数更新裁剪视图
 
     def load_image(self, path):
-        # 清除之前的裁剪矩形
-        if self.crop_rect and self.crop_rect.scene() == self.scene:
-            self.scene.removeItem(self.crop_rect)
-        self.crop_rect = None
-        self.start_pos = None
-        
-        # 清除场景并加载新图片
-        self.scene.clear()
-        self.current_image_path = path
-        pixmap = QPixmap(str(path))
-        self.current_pixmap = pixmap
-        self.cropped_pixmap = None
-        self.pixmap_item = self.scene.addPixmap(pixmap)
-        self.adjust_image()
+        """加载图片"""
+        try:
+            # 清除现有内容
+            self.scene.clear()
+            self.crop_rect = None
+            self.start_pos = None
+            self.current_image_path = path
+            self.cropped_pixmap = None
+            self.crop_area = None
+            
+            # 加载图片
+            self.current_pixmap = QPixmap(str(path))
+            if not self.current_pixmap.isNull():
+                self.pixmap_item = self.scene.addPixmap(self.current_pixmap)
+                self.adjust_image()
+                print(f"Image loaded successfully: {path}")
+            else:
+                print(f"Failed to load image: {path}")
+        except Exception as e:
+            print(f"Error loading image: {str(e)}")
 
     def adjust_image(self):
-        if not self.current_pixmap:
+        """调整图片大小和位置"""
+        if not self.current_pixmap or self.current_pixmap.isNull():
             return
             
         try:
@@ -63,110 +82,147 @@ class ImageProcessor(QGraphicsView):
             # 计算缩放比例
             scale_w = view_rect.width() / pixmap_rect.width()
             scale_h = view_rect.height() / pixmap_rect.height()
-            scale = min(scale_w, scale_h)  # 使用较小的缩放比例以确保完整显示
+            self.scale_factor = min(scale_w, scale_h)
             
             # 重置变换
             self.resetTransform()
             # 应用缩放
-            self.scale(scale, scale)
+            self.scale(self.scale_factor, self.scale_factor)
             
-            # 将QRect转换为QRectF
-            scene_rect = QRectF(
-                pixmap_rect.x(),
-                pixmap_rect.y(),
-                pixmap_rect.width(),
-                pixmap_rect.height()
-            )
-            # 调整场景大小
-            self.setSceneRect(scene_rect)
+            # 设置场景大小
+            self.scene.setSceneRect(0, 0, pixmap_rect.width(), pixmap_rect.height())
             # 居中显示
             self.centerOn(self.pixmap_item)
+            
+            print(f"Image adjusted, scale: {self.scale_factor}")
         except Exception as e:
-            print(f"Error in adjust_image: {str(e)}")
+            print(f"Error adjusting image: {str(e)}")
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            # 清除之前的裁剪矩形
-            if self.crop_rect and self.crop_rect.scene() == self.scene:
-                self.scene.removeItem(self.crop_rect)
-            
-            self.start_pos = self.mapToScene(event.pos())
-            self.crop_rect = QGraphicsRectItem()
-            self.crop_rect.setPen(QColor(255, 0, 0))
-            self.scene.addItem(self.crop_rect)
+        """鼠标按下事件"""
+        if event.button() == Qt.LeftButton and self.pixmap_item:
+            try:
+                # 获取场景坐标
+                scene_pos = self.mapToScene(event.pos())
+                # 转换为图片坐标
+                self.start_pos = scene_pos
+                
+                # 移除现有的选择框
+                if self.crop_rect:
+                    self.scene.removeItem(self.crop_rect)
+                
+                # 创建新的选择框
+                self.crop_rect = QGraphicsRectItem()
+                pen = QPen(QColor(255, 0, 0))  # 红色
+                pen.setWidth(2)  # 设置线宽
+                self.crop_rect.setPen(pen)
+                self.scene.addItem(self.crop_rect)
+                
+                print(f"Mouse press at: {scene_pos}")
+            except Exception as e:
+                print(f"Error in mouse press: {str(e)}")
 
     def mouseMoveEvent(self, event):
-        if self.start_pos and self.crop_rect and self.crop_rect.scene() == self.scene:
-            end_pos = self.mapToScene(event.pos())
-            rect = QRectF(self.start_pos, end_pos).normalized()
-            self.crop_rect.setRect(rect)
+        """鼠标移动事件"""
+        if event.buttons() & Qt.LeftButton and self.start_pos and self.crop_rect:
+            try:
+                # 获取当前位置
+                current_pos = self.mapToScene(event.pos())
+                
+                # 创建选择区域
+                rect = QRectF(self.start_pos, current_pos).normalized()
+                self.crop_rect.setRect(rect)
+                
+                print(f"Mouse move to: {current_pos}")
+            except Exception as e:
+                print(f"Error in mouse move: {str(e)}")
 
     def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton and self.start_pos and self.crop_rect and self.crop_rect.scene() == self.scene:
-            end_pos = self.mapToScene(event.pos())
-            rect = QRectF(self.start_pos, end_pos).normalized()
-            
-            # 获取当前缩放比例
-            transform = self.transform()
-            scale = transform.m11()  # 获取水平缩放因子
-            
-            # 计算实际图片上的裁剪区域
-            actual_rect = QRectF(
-                rect.x() / scale,
-                rect.y() / scale,
-                rect.width() / scale,
-                rect.height() / scale
-            )
-            
-            # 确保裁剪区域在图片范围内
-            if self.current_pixmap:
-                img_rect = self.current_pixmap.rect()
-                actual_rect = actual_rect.intersected(QRectF(img_rect))
+        """鼠标释放事件"""
+        if event.button() == Qt.LeftButton and self.start_pos and self.crop_rect:
+            try:
+                # 获取结束位置
+                end_pos = self.mapToScene(event.pos())
+                rect = QRectF(self.start_pos, end_pos).normalized()
                 
-                if not actual_rect.isEmpty():
-                    self.crop_area = (
-                        actual_rect.left(),
-                        actual_rect.top(),
-                        actual_rect.right(),
-                        actual_rect.bottom()
-                    )
+                # 确保裁剪区域在图片范围内
+                if self.current_pixmap:
+                    img_rect = QRectF(self.current_pixmap.rect())
+                    actual_rect = rect.intersected(img_rect)
                     
-                    # 创建裁剪后的图片
-                    cropped = self.current_pixmap.copy(
-                        int(actual_rect.left()),
-                        int(actual_rect.top()),
-                        int(actual_rect.width()),
-                        int(actual_rect.height())
-                    )
-                    self.cropped_pixmap = cropped
-                    
-                    # 更新裁剪视图
-                    if self.crop_completed:
-                        self.crop_completed()
-            
-            self.start_pos = None
+                    if not actual_rect.isEmpty():
+                        # 保存裁剪区域
+                        self.crop_area = (
+                            int(actual_rect.x()),
+                            int(actual_rect.y()),
+                            int(actual_rect.width()),
+                            int(actual_rect.height())
+                        )
+                        
+                        # 创建裁剪后的图片
+                        cropped = self.current_pixmap.copy(
+                            int(actual_rect.x()),
+                            int(actual_rect.y()),
+                            int(actual_rect.width()),
+                            int(actual_rect.height())
+                        )
+                        self.cropped_pixmap = cropped
+                        
+                        print(f"Crop completed: area={self.crop_area}, size={cropped.size()}")
+                        
+                        # 调用回调函数更新预览
+                        if self.crop_completed:
+                            self.crop_completed()
+                
+                self.start_pos = None
+            except Exception as e:
+                print(f"Error in mouse release: {str(e)}")
 
 
 class DetailViewer(QLabel):
     def __init__(self):
         super().__init__()
-        self.setMinimumSize(100, 100)
+        self.setMinimumSize(200, 200)
         self.setAlignment(Qt.AlignCenter)
-        self.setStyleSheet("border: 1px solid #cccccc;")
+        self.setStyleSheet("""
+            QLabel {
+                border: 1px solid #cccccc;
+                background: white;
+            }
+        """)
+        self._current_pixmap = None
 
-    def resizeEvent(self, event):
-        super().resizeEvent(event)
-        if self.pixmap():
-            self.update_image(self.pixmap())
+    def clear(self):
+        """清除图片"""
+        self._current_pixmap = None
+        super().clear()
+        print("Detail view cleared")
 
     def update_image(self, pixmap):
-        if pixmap:
-            scaled_pixmap = pixmap.scaled(
-                self.size(),
-                Qt.KeepAspectRatio,
-                Qt.SmoothTransformation
-            )
-            super().setPixmap(scaled_pixmap)
+        """更新预览图片"""
+        try:
+            if pixmap and not pixmap.isNull():
+                self._current_pixmap = pixmap
+                # 计算缩放后的大小
+                available_size = self.size()
+                scaled_pixmap = pixmap.scaled(
+                    available_size,
+                    Qt.KeepAspectRatio,
+                    Qt.SmoothTransformation
+                )
+                super().setPixmap(scaled_pixmap)
+                print(f"Detail view updated with image size: {pixmap.size()}")
+            else:
+                print("Warning: Received null or invalid pixmap")
+                self.clear()
+        except Exception as e:
+            print(f"Error updating detail view: {str(e)}")
+
+    def resizeEvent(self, event):
+        """处理窗口大小改变事件"""
+        super().resizeEvent(event)
+        if self._current_pixmap:
+            self.update_image(self._current_pixmap)
 
 
 class PPTGeneratorApp(QMainWindow):
@@ -176,6 +232,9 @@ class PPTGeneratorApp(QMainWindow):
         self.image_data = {}
         self.current_image = None
         self.default_comment = "评估结论：1.成像清晰，检测无风险；2.可以通过控制阀值完成允收"
+        
+        # 设置图片处理器的回调
+        self.image_processor.crop_completed = self.update_detail_view
 
     def init_ui(self):
         self.setWindowTitle("幻灯片生成器")
@@ -343,7 +402,6 @@ class PPTGeneratorApp(QMainWindow):
 
         # 添加信号连接
         self.image_list.currentItemChanged.connect(self.select_image)
-        self.image_processor.crop_completed = self.update_detail_view
 
     def load_folders(self):
         folders = QFileDialog.getExistingDirectory(self, "选择包含图片的文件夹")
@@ -351,48 +409,100 @@ class PPTGeneratorApp(QMainWindow):
             self.scan_images(Path(folders))
 
     def scan_images(self, root_path):
-        self.image_data.clear()
-        self.image_list.clear()
+        """扫描项目路径下的所有图片"""
+        try:
+            # 清除现有数据
+            self.image_data.clear()
+            self.image_list.clear()
+            self.image_processor.scene.clear()
+            self.detail_view.clear()
+            self.comment_edit.clear()
 
-        for img_path in root_path.rglob("*.*"):
-            if img_path.suffix.lower() in ['.jpg', '.jpeg', '.png']:
-                folder_name = img_path.parent.name
-                rel_path = str(img_path.relative_to(root_path))
-
-                self.image_data[rel_path] = {
-                    'full_path': str(img_path),
-                    'crop_area': None,
-                    'comment': self.default_comment,
-                    'folder': folder_name
-                }
-                self.image_list.addItem(rel_path)
+            # 支持的图片格式
+            image_extensions = ('.png', '.jpg', '.jpeg', '.bmp', '.gif')
+            
+            # 递归扫描所有图片
+            for file_path in Path(root_path).rglob('*'):
+                if file_path.suffix.lower() in image_extensions:
+                    file_name = file_path.name
+                    folder_name = file_path.parent.name
+                    
+                    # 存储图片信息，使用绝对路径
+                    abs_path = str(file_path.absolute())
+                    self.image_data[file_name] = {
+                        'full_path': abs_path,
+                        'folder': folder_name,
+                        'comment': self.default_comment,
+                        'crop_area': None
+                    }
+                    
+                    # 添加到列表
+                    self.image_list.addItem(file_name)
+            
+            # 如果找到图片，选择第一张
+            if self.image_list.count() > 0:
+                self.image_list.setCurrentRow(0)
+                
+            return True
+        except Exception as e:
+            print(f"Error scanning images: {str(e)}")
+            return False
 
     def update_detail_view(self):
         """更新细节视图"""
-        if hasattr(self.image_processor, 'cropped_pixmap') and self.image_processor.cropped_pixmap:
-            self.detail_view.update_image(self.image_processor.cropped_pixmap)
+        try:
+            if hasattr(self.image_processor, 'cropped_pixmap') and self.image_processor.cropped_pixmap:
+                cropped = self.image_processor.cropped_pixmap
+                if not cropped.isNull():
+                    self.detail_view.update_image(cropped)
+                    print(f"Updated detail view with cropped image: {cropped.size()}")
+                else:
+                    print("Warning: Cropped pixmap is null")
+            else:
+                print("Warning: No cropped image available")
+        except Exception as e:
+            print(f"Error updating detail view: {str(e)}")
 
     def select_image(self, item):
+        """选择图片时的处理"""
         if item:
-            self.current_image = item.text()
-            img_info = self.image_data[self.current_image]
-            self.image_processor.load_image(img_info['full_path'])
-            self.comment_edit.setPlainText(img_info['comment'])
-            # 清除细节视图
-            self.detail_view.clear()
-            # 设置标题
-            self.title_edit.setPlainText(img_info['folder'])
+            file_name = item.text()
+            if file_name in self.image_data:
+                try:
+                    self.current_image = file_name
+                    img_info = self.image_data[file_name]
+                    
+                    # 加载图片
+                    self.image_processor.load_image(img_info['full_path'])
+                    
+                    # 设置评估意见
+                    self.comment_edit.setPlainText(img_info.get('comment', self.default_comment))
+                    
+                    # 设置标题
+                    self.title_edit.setPlainText(img_info.get('folder', ''))
+                    
+                    # 清除细节视图
+                    self.detail_view.clear()
+                    
+                    print(f"Loading image: {img_info['full_path']}")
+                except Exception as e:
+                    print(f"Error selecting image: {str(e)}")
 
     def save_current_data(self):
+        """保存当前图片的数据"""
         if self.current_image:
-            img_info = self.image_data[self.current_image]
-            # 保存裁剪区域
-            if hasattr(self.image_processor, 'crop_area'):
-                img_info['crop_area'] = self.image_processor.crop_area
-            # 保存评估意见
-            img_info['comment'] = self.comment_edit.toPlainText() or self.default_comment
-            # 保存标题
-            img_info['folder'] = self.title_edit.toPlainText()
+            try:
+                img_info = self.image_data[self.current_image]
+                # 保存裁剪区域
+                if hasattr(self.image_processor, 'crop_area'):
+                    img_info['crop_area'] = self.image_processor.crop_area
+                # 保存评估意见
+                img_info['comment'] = self.comment_edit.toPlainText() or self.default_comment
+                # 保存标题
+                img_info['folder'] = self.title_edit.toPlainText()
+                print(f"Saved data for image: {self.current_image}")
+            except Exception as e:
+                print(f"Error saving current data: {str(e)}")
 
     def generate_ppt(self):
         self.save_current_data()
