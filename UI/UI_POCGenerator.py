@@ -11,51 +11,72 @@ class StepBar(QWidget):
         super().__init__(parent)
         self.steps = steps
         self.current_step = current_step
+        self.layout = QHBoxLayout(self)  # 保存为实例变量
+        self.layout.setSpacing(0)
         self.initUI()
 
     def setCurrentStep(self, idx):
-        self.current_step = idx
-        self.initUI()
+        """更新当前步骤"""
+        if idx != self.current_step:
+            self.current_step = idx
+            # 清除现有布局中的所有部件
+            while self.layout.count():
+                item = self.layout.takeAt(0)
+                if item.widget():
+                    item.widget().deleteLater()
+            # 重新初始化UI
+            self.initUI()
 
     def initUI(self):
-        layout = QHBoxLayout(self)
-        layout.setSpacing(0)
+        """初始化或更新UI"""
         for i, step in enumerate(self.steps):
             step_widget = QWidget()
             step_layout = QVBoxLayout(step_widget)
             step_layout.setContentsMargins(0, 0, 0, 0)
+            
             # 圆形编号
             circle = QLabel(str(i+1) if i > self.current_step else '✓' if i < self.current_step else str(i+1))
             circle.setFixedSize(32, 32)
             circle.setAlignment(Qt.AlignCenter)
             circle.setFont(QFont('Arial', 14, QFont.Bold))
-            if i < self.current_step:
-                circle.setStyleSheet('background:#1890ff;color:white;border-radius:16px;border:2px solid #1890ff;')
-            elif i == self.current_step:
+            
+            # 设置圆形样式
+            if i < self.current_step:  # 已完成的步骤
+                circle.setStyleSheet('background:#e8e8e8;color:#8c8c8c;border-radius:16px;border:2px solid #e8e8e8;')
+            elif i == self.current_step:  # 当前步骤
                 circle.setStyleSheet('background:white;color:#1890ff;border-radius:16px;border:2px solid #1890ff;')
-            else:
+            else:  # 未开始的步骤
                 circle.setStyleSheet('background:#f0f2f5;color:#bfbfbf;border-radius:16px;border:2px solid #e8e8e8;')
+            
             # 步骤名称
             label = QLabel(step)
             label.setAlignment(Qt.AlignCenter)
             label.setFont(QFont('Arial', 10, QFont.Bold))
-            if i == self.current_step:
+            
+            # 设置文字样式
+            if i < self.current_step:  # 已完成的步骤
+                label.setStyleSheet('color:#8c8c8c;')
+            elif i == self.current_step:  # 当前步骤
                 label.setStyleSheet('color:#1890ff;')
-            elif i < self.current_step:
+            else:  # 未开始的步骤
                 label.setStyleSheet('color:#bfbfbf;')
-            else:
-                label.setStyleSheet('color:#bfbfbf;')
+            
             step_layout.addWidget(circle)
             step_layout.addWidget(label)
-            layout.addWidget(step_widget)
+            self.layout.addWidget(step_widget)
+            
             # 连接线
             if i < len(self.steps) - 1:
                 line = QFrame()
                 line.setFixedHeight(2)
                 line.setFixedWidth(40)
-                line.setStyleSheet('background:#e8e8e8;')
-                layout.addWidget(line)
-        layout.addStretch()
+                if i < self.current_step:  # 已完成步骤之间的线
+                    line.setStyleSheet('background:#e8e8e8;')
+                else:  # 其他线
+                    line.setStyleSheet('background:#f0f2f5;')
+                self.layout.addWidget(line)
+        
+        self.layout.addStretch()
 
 class RFQCheckStep(QWidget):
     def __init__(self, parent=None):
