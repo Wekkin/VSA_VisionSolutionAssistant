@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QStackedWidget, QFrame, QTextEdit, QFileDialog, QListWidget, QListWidgetItem, QComboBox, QGridLayout, QApplication, QScrollArea, QCheckBox, QLineEdit, QDialog, QMessageBox)
+from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton, QStackedWidget, QFrame, QTextEdit, QFileDialog, QListWidget, QListWidgetItem, QComboBox, QGridLayout, QApplication, QScrollArea, QCheckBox, QLineEdit, QDialog, QMessageBox, QTableWidget, QSpinBox, QInputDialog)
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QFont, QColor, QIcon
 import sys
@@ -555,14 +555,348 @@ class ImageUploadStep(QWidget):
 class LightConfigStep(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.project_path = None  # 存储项目路径
+        self.project_name = None  # 存储项目名称
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 10, 10, 10)
+        
+        # 标题
         title = QLabel('光照配置')
         title.setFont(QFont('Arial', 18, QFont.Bold))
         layout.addWidget(title)
-        form = QLabel('光源类型、角度、亮度等参数表单（示意）')
-        form.setStyleSheet('background:#fafafa;border:1px solid #e8e8e8;padding:32px;border-radius:8px;')
-        layout.addWidget(form)
-        layout.addStretch()
+        
+        # 创建表格
+        self.table = QTableWidget()
+        self.table.setColumnCount(6)
+        self.table.setHorizontalHeaderLabels(['工位', '光源型号', '曝光时间(ms)', '光源距离(mm)', '光源角度(°)', '备注'])
+        
+        # 设置表格样式
+        self.table.setStyleSheet("""
+            QTableWidget {
+                background: white;
+                border: 1px solid #e8e8e8;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            QTableWidget::item {
+                padding: 1px;
+            }
+            QHeaderView::section {
+                background: #fafafa;
+                padding: 1px;
+                border: none;
+                border-bottom: 1px solid #e8e8e8;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QLineEdit {
+                font-size: 14px;
+                padding: 4px;
+            }
+            QSpinBox {
+                font-size: 14px;
+                padding: 4px;
+            }
+        """)
+        
+        # 设置默认行高
+        self.table.verticalHeader().setDefaultSectionSize(40)  # 设置默认行高为40像素
+        
+        # 设置表头行高
+        self.table.horizontalHeader().setFixedHeight(40)  # 设置表头行高为40像素
+        
+        # 调整列宽
+        self.table.setColumnWidth(0, 100)  # 工位
+        self.table.setColumnWidth(1, 180)  # 光源型号
+        self.table.setColumnWidth(2, 150)  # 曝光时间
+        self.table.setColumnWidth(3, 150)  # 光源距离
+        self.table.setColumnWidth(4, 150)  # 光源角度
+        self.table.setColumnWidth(5, 150)  # 备注
+        
+        # 创建按钮工具栏
+        toolbar = QWidget()
+        toolbar_layout = QHBoxLayout(toolbar)
+        toolbar_layout.setContentsMargins(0, 0, 0, 8)
+        
+        # 添加行按钮
+        add_row_btn = QPushButton('添加行')
+        add_row_btn.setStyleSheet("""
+            QPushButton {
+                background: #1890ff;
+                color: white;
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background: #40a9ff;
+            }
+        """)
+        add_row_btn.clicked.connect(self.add_config)
+        
+        # 添加列按钮
+        add_col_btn = QPushButton('添加列')
+        add_col_btn.setStyleSheet(add_row_btn.styleSheet())
+        add_col_btn.clicked.connect(self.add_column)
+        
+        # 删除列按钮
+        del_col_btn = QPushButton('删除列')
+        del_col_btn.setStyleSheet("""
+            QPushButton {
+                background: #ff4d4f;
+                color: white;
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background: #ff7875;
+            }
+        """)
+        del_col_btn.clicked.connect(self.delete_column)
+        
+        # 保存按钮
+        save_btn = QPushButton('保存配置')
+        save_btn.setStyleSheet("""
+            QPushButton {
+                background: #52c41a;
+                color: white;
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background: #73d13d;
+            }
+            QPushButton:pressed {
+                background: #389e0d;
+            }
+        """)
+        save_btn.clicked.connect(self.save_config)
+        
+        # 添加按钮到工具栏
+        toolbar_layout.addWidget(add_row_btn)
+        toolbar_layout.addWidget(add_col_btn)
+        toolbar_layout.addWidget(del_col_btn)
+        toolbar_layout.addWidget(save_btn)
+        toolbar_layout.addStretch()
+        
+        # 布局
+        layout.addWidget(toolbar)
+        layout.addWidget(self.table)
+
+    def save_config(self):
+        """保存光照配置"""
+        # 获取主窗口
+        main_window = self.window()
+        
+        # 从RFQ步骤获取项目信息
+        if hasattr(main_window, 'poc_generator'):
+            poc_generator = main_window.poc_generator
+            if hasattr(poc_generator, 'rfq_check'):
+                rfq_check = poc_generator.rfq_check
+                self.project_path = rfq_check.project_path
+                if self.project_path:
+                    self.project_name = os.path.basename(self.project_path)
+        
+        if not self.project_path:
+            QMessageBox.warning(self, "错误", "请先在RFQ步骤中选择项目！")
+            return
+            
+        try:
+            # 收集表格数据
+            data = []
+            headers = []
+            
+            # 获取表头
+            for col in range(self.table.columnCount()):
+                header = self.table.horizontalHeaderItem(col).text()
+                headers.append(header)
+            
+            # 获取每行数据
+            for row in range(self.table.rowCount()):
+                row_data = {}
+                for col in range(self.table.columnCount()):
+                    widget = self.table.cellWidget(row, col)
+                    if isinstance(widget, QLineEdit):
+                        value = widget.text()
+                    elif isinstance(widget, QSpinBox):
+                        value = widget.value()
+                    else:
+                        continue
+                    row_data[headers[col]] = value
+                if row_data:  # 只添加非空行
+                    data.append(row_data)
+            
+            if not data:
+                QMessageBox.warning(self, "警告", "表格为空，请先添加数据！")
+                return
+            
+            # 准备保存数据
+            save_data = {
+                "project_name": self.project_name,
+                "save_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "headers": headers,
+                "light_configs": data
+            }
+            
+            # 使用项目名称作为文件名
+            save_path = os.path.join(self.project_path, f"{self.project_name}_光照配置.json")
+            
+            # 保存为JSON文件
+            with open(save_path, 'w', encoding='utf-8') as f:
+                json.dump(save_data, f, ensure_ascii=False, indent=2)
+            
+            QMessageBox.information(self, "成功", f"光照配置已保存到：\n{save_path}")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "错误", f"保存失败: {str(e)}")
+            
+    def load_config(self):
+        """加载已保存的光照配置"""
+        # 从RFQ步骤获取项目信息
+        main_window = self.window()
+        if hasattr(main_window, 'poc_generator'):
+            poc_generator = main_window.poc_generator
+            if hasattr(poc_generator, 'rfq_check'):
+                rfq_check = poc_generator.rfq_check
+                self.project_path = rfq_check.project_path
+                if self.project_path:
+                    self.project_name = os.path.basename(self.project_path)
+        
+        if not self.project_path:
+            return
+            
+        try:
+            config_file = os.path.join(self.project_path, f"{self.project_name}_光照配置.json")
+            
+            if not os.path.exists(config_file):
+                return
+                
+            with open(config_file, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                
+            # 清空现有表格
+            self.table.setRowCount(0)
+            
+            # 设置表头
+            if 'headers' in data:
+                self.table.setColumnCount(len(data['headers']))
+                self.table.setHorizontalHeaderLabels(data['headers'])
+            
+            # 加载数据
+            for row_data in data.get('light_configs', []):
+                self.add_config(row_data)
+                
+        except Exception as e:
+            QMessageBox.warning(self, "警告", f"加载配置失败: {str(e)}")
+
+    def add_config(self, row_data=None):
+        """添加新的光照配置行"""
+        row = self.table.rowCount()
+        self.table.insertRow(row)
+        
+        # 工位输入
+        station = QLineEdit()
+        station.setPlaceholderText('输入工位名称')
+        if row_data:
+            station.setText(str(row_data.get('工位', '')))
+        self.table.setCellWidget(row, 0, station)
+        
+        # 光源型号输入
+        light_model = QLineEdit()
+        light_model.setPlaceholderText('输入光源型号')
+        if row_data:
+            light_model.setText(str(row_data.get('光源型号', '')))
+        self.table.setCellWidget(row, 1, light_model)
+        
+        # 曝光时间输入
+        exposure = QSpinBox()
+        exposure.setRange(0, 10000)
+        exposure.setSuffix(' ms')
+        if row_data:
+            exposure.setValue(int(row_data.get('曝光时间(ms)', 0)))
+        self.table.setCellWidget(row, 2, exposure)
+        
+        # 光源距离输入
+        distance = QSpinBox()
+        distance.setRange(0, 1000)
+        distance.setSuffix(' mm')
+        if row_data:
+            distance.setValue(int(row_data.get('光源距离(mm)', 0)))
+        self.table.setCellWidget(row, 3, distance)
+        
+        # 光源角度输入
+        angle = QSpinBox()
+        angle.setRange(0, 360)
+        angle.setSuffix(' °')
+        if row_data:
+            angle.setValue(int(row_data.get('光源角度(°)', 0)))
+        self.table.setCellWidget(row, 4, angle)
+        
+        # 备注输入
+        note = QLineEdit()
+        note.setPlaceholderText('输入备注')
+        if row_data:
+            note.setText(str(row_data.get('备注', '')))
+        self.table.setCellWidget(row, 5, note)
+
+    def add_column(self):
+        """添加新列"""
+        col_count = self.table.columnCount()
+        self.table.insertColumn(col_count - 1)  # 在最后一列（操作列）之前插入
+        
+        # 设置新列标题
+        header_text, ok = QInputDialog.getText(
+            self, '添加列', '请输入列标题：',
+            QLineEdit.Normal, ''
+        )
+        if ok and header_text:
+            headers = [self.table.horizontalHeaderItem(i).text() 
+                      for i in range(self.table.columnCount())]
+            headers[col_count - 1] = header_text
+            self.table.setHorizontalHeaderLabels(headers)
+            
+            # 为现有行添加输入框
+            for row in range(self.table.rowCount()):
+                input_widget = QLineEdit()
+                input_widget.setPlaceholderText(f'输入{header_text}')
+                self.table.setCellWidget(row, col_count - 1, input_widget)
+            
+            # 设置列宽
+            self.table.setColumnWidth(col_count - 1, 150)
+        else:
+            self.table.removeColumn(col_count - 1)
+            
+    def delete_column(self):
+        """删除列"""
+        col_count = self.table.columnCount()
+        if col_count <= 2:  # 保留至少一列数据和操作列
+            QMessageBox.warning(self, '警告', '无法删除更多列！')
+            return
+            
+        # 显示列选择对话框
+        headers = [self.table.horizontalHeaderItem(i).text() 
+                  for i in range(col_count - 1)]  # 不包括操作列
+        header, ok = QInputDialog.getItem(
+            self, '删除列', '请选择要删除的列：',
+            headers, 0, False
+        )
+        
+        if ok and header:
+            col_index = headers.index(header)
+            self.table.removeColumn(col_index)
+
+    def update_project_info(self, project_path):
+        """更新项目信息"""
+        self.project_path = project_path
+        if project_path:
+            self.project_name = os.path.basename(project_path)
+            # 尝试加载已有配置
+            self.load_config()
 
 class PPTGenStep(QWidget):
     def __init__(self, parent=None):
