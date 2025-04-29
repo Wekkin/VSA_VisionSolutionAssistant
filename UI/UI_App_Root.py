@@ -325,6 +325,16 @@ class MainWindow(QMainWindow):
         self.logger.info("初始化主窗口")
         self.sidebar_expanded = True
         self.stacked_widget = QStackedWidget()
+        
+        # 初始化页面索引
+        self.home_page_index = 0
+        self.settings_page_index = None
+        self.poc_page_index = None
+        self.config_page_index = None
+        self.integration_page_index = None
+        self.extensions_page_index = None
+        
+        # 初始化页面引用
         self.poc_generator = None
         self.config_recorder = None
         self.integration_analyzer = None
@@ -332,6 +342,7 @@ class MainWindow(QMainWindow):
         self.settings_page = None
         self.project_wizard = None
         self.projects_data = []  # 存储项目数据
+        
         self.initUI()
         self.logger.info("主窗口初始化完成")
         
@@ -578,6 +589,13 @@ class MainWindow(QMainWindow):
         
         # 将首页添加到堆叠窗口
         self.stacked_widget.addWidget(home_page)
+        self.home_page_index = 0
+        
+        # 创建并添加设置页面
+        from UI.UI_Settings import SettingsPage
+        self.settings_page = SettingsPage()
+        self.stacked_widget.addWidget(self.settings_page)
+        self.settings_page_index = self.stacked_widget.count() - 1
         
         # 将堆叠窗口添加到主内容布局
         content_layout.addWidget(self.stacked_widget)
@@ -651,14 +669,8 @@ class MainWindow(QMainWindow):
         self.integration_btn.setChecked(False)
         self.feature_btn.setChecked(False)
         
-        # 如果设置页面不存在，创建它
-        if not self.settings_page:
-            from UI.UI_Settings import SettingsPage
-            self.settings_page = SettingsPage()
-            self.stacked_widget.addWidget(self.settings_page)
-        
         # 显示设置页面
-        self.stacked_widget.setCurrentWidget(self.settings_page)
+        self.stacked_widget.setCurrentIndex(self.settings_page_index)
 
     def show_poc_page(self):
         self.logger.info("切换到POC制作页面")
@@ -674,9 +686,10 @@ class MainWindow(QMainWindow):
             from UI.UI_POCGenerator import POCGenerator
             self.poc_generator = POCGenerator()
             self.stacked_widget.addWidget(self.poc_generator)
+            self.poc_page_index = self.stacked_widget.count() - 1
         
         # 显示POC生成器页面
-        self.stacked_widget.setCurrentWidget(self.poc_generator)
+        self.stacked_widget.setCurrentIndex(self.poc_page_index)
 
     def show_config_page(self):
         self.logger.info("切换到配置记录页面")
@@ -692,9 +705,10 @@ class MainWindow(QMainWindow):
             from UI.UI_ConfigurationRecorder import ConfigurationRecorder
             self.config_recorder = ConfigurationRecorder()
             self.stacked_widget.addWidget(self.config_recorder)
+            self.config_page_index = self.stacked_widget.count() - 1
         
         # 显示配置记录页面
-        self.stacked_widget.setCurrentWidget(self.config_recorder)
+        self.stacked_widget.setCurrentIndex(self.config_page_index)
 
     def show_integration_page(self):
         self.logger.info("切换到集成分析页面")
@@ -710,9 +724,10 @@ class MainWindow(QMainWindow):
             from UI.UI_IntegrationAnalyzer import IntegrationAnalyzer
             self.integration_analyzer = IntegrationAnalyzer()
             self.stacked_widget.addWidget(self.integration_analyzer)
+            self.integration_page_index = self.stacked_widget.count() - 1
         
         # 显示集成分析页面
-        self.stacked_widget.setCurrentWidget(self.integration_analyzer)
+        self.stacked_widget.setCurrentIndex(self.integration_page_index)
 
     def show_extensions_page(self):
         self.logger.info("切换到功能拓展页面")
@@ -732,9 +747,10 @@ class MainWindow(QMainWindow):
             self.extensions_window = ExtensionsWindow()
             layout.addWidget(self.extensions_window)
             self.stacked_widget.addWidget(container)
+            self.extensions_page_index = self.stacked_widget.count() - 1
         
         # 显示功能拓展页面
-        self.stacked_widget.setCurrentWidget(self.extensions_window.parent())
+        self.stacked_widget.setCurrentIndex(self.extensions_page_index)
 
     def show_analysis_page(self):
         self.logger.info("尝试访问开发中的缺陷分析功能")
