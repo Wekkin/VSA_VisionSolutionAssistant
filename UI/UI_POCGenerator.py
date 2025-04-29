@@ -5,6 +5,7 @@ import sys
 import os
 import json
 from datetime import datetime
+from UI.UI_DefectMatrix import DefectMatrixGenerator
 
 class StepBar(QWidget):
     def __init__(self, steps, current_step=0, parent=None):
@@ -620,73 +621,90 @@ class FolderCleanStep(QWidget):
 class POCGenerator(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.steps = [
-            'RFQ完整性检查',
-            '缺陷矩阵生成',
-            '图片上传',
-            '光照配置',
-            '自动生成PPT',
-            '风险备注与标注',
-            '空文件夹清理'
-        ]
         self.current_step = 0
+        self.project_path = ""
         self.initUI()
 
     def initUI(self):
-        main_layout = QVBoxLayout(self)
-        main_layout.setSpacing(0)
-        main_layout.setContentsMargins(24, 24, 24, 24)
-        # 顶部步骤条
+        layout = QVBoxLayout(self)
+        
+        # 步骤条
+        self.steps = ["RFQ完整性检查", "缺陷矩阵生成", "图片上传", "光照配置", 
+                     "自动生成PPT", "风险备注与标注", "文件夹整理"]
         self.step_bar = StepBar(self.steps, self.current_step)
-        main_layout.addWidget(self.step_bar)
-        # 内容区
+        layout.addWidget(self.step_bar)
+        
+        # 堆叠布局用于切换不同步骤的界面
         self.stack = QStackedWidget()
-        self.pages = [
-            RFQCheckStep(),
-            DefectMatrixStep(),
-            ImageUploadStep(),
-            LightConfigStep(),
-            PPTGenStep(),
-            RiskNoteStep(),
-            FolderCleanStep()
-        ]
-        for page in self.pages:
-            self.stack.addWidget(page)
-        main_layout.addWidget(self.stack, stretch=1)
-        # 底部按钮区
-        btn_bar = QHBoxLayout()
-        self.prev_btn = QPushButton('上一步')
-        self.next_btn = QPushButton('下一步')
-        self.prev_btn.setStyleSheet('background:#f0f2f5;color:#1890ff;padding:8px 32px;border-radius:4px;')
-        self.next_btn.setStyleSheet('background:#1890ff;color:white;padding:8px 32px;border-radius:4px;')
-        self.prev_btn.clicked.connect(self.prev_step)
-        self.next_btn.clicked.connect(self.next_step)
-        btn_bar.addStretch()
-        btn_bar.addWidget(self.prev_btn)
-        btn_bar.addWidget(self.next_btn)
-        main_layout.addLayout(btn_bar)
-        self.update_btn_state()
-
-    def prev_step(self):
+        
+        # 第一步：RFQ完整性检查
+        self.rfq_check = RFQCheckStep()
+        self.stack.addWidget(self.rfq_check)
+        
+        # 第二步：缺陷矩阵生成
+        self.defect_matrix = DefectMatrixGenerator("")
+        self.stack.addWidget(self.defect_matrix)
+        
+        # 第三步：图片上传
+        self.image_upload = ImageUploadStep()
+        self.stack.addWidget(self.image_upload)
+        
+        # 第四步：光照配置
+        self.light_config = LightConfigStep()
+        self.stack.addWidget(self.light_config)
+        
+        # 第五步：自动生成PPT
+        self.ppt_gen = PPTGenStep()
+        self.stack.addWidget(self.ppt_gen)
+        
+        # 第六步：风险备注与标注
+        self.risk_note = RiskNoteStep()
+        self.stack.addWidget(self.risk_note)
+        
+        # 第七步：空文件夹清理
+        self.folder_clean = FolderCleanStep()
+        self.stack.addWidget(self.folder_clean)
+        
+        layout.addWidget(self.stack)
+        
+        # 底部按钮
+        button_layout = QHBoxLayout()
+        self.prev_btn = QPushButton("上一步")
+        self.next_btn = QPushButton("下一步")
+        self.prev_btn.clicked.connect(self.prevStep)
+        self.next_btn.clicked.connect(self.nextStep)
+        self.prev_btn.setEnabled(False)
+        
+        button_layout.addWidget(self.prev_btn)
+        button_layout.addWidget(self.next_btn)
+        layout.addLayout(button_layout)
+        
+    def nextStep(self):
+        if self.current_step < len(self.steps) - 1:
+            # 处理第一步到第二步的转换
+            if self.current_step == 0:
+                project_path = self.rfq_check.project_path
+                if not project_path:
+                    QMessageBox.warning(self, "警告", "请先选择项目路径！")
+                    return
+                # 更新缺陷矩阵生成器的项目路径
+                self.defect_matrix.project_path = project_path
+                
+            self.current_step += 1
+            self.stack.setCurrentIndex(self.current_step)
+            self.step_bar.setCurrentStep(self.current_step)
+            self.prev_btn.setEnabled(True)
+            if self.current_step == len(self.steps) - 1:
+                self.next_btn.setEnabled(False)
+                
+    def prevStep(self):
         if self.current_step > 0:
             self.current_step -= 1
             self.stack.setCurrentIndex(self.current_step)
             self.step_bar.setCurrentStep(self.current_step)
-            self.update_btn_state()
-
-    def next_step(self):
-        if self.current_step < len(self.steps) - 1:
-            self.current_step += 1
-            self.stack.setCurrentIndex(self.current_step)
-            self.step_bar.setCurrentStep(self.current_step)
-            self.update_btn_state()
-
-    def update_btn_state(self):
-        self.prev_btn.setEnabled(self.current_step > 0)
-        if self.current_step == len(self.steps) - 1:
-            self.next_btn.setText('完成')
-        else:
-            self.next_btn.setText('下一步')
+            self.next_btn.setEnabled(True)
+            if self.current_step == 0:
+                self.prev_btn.setEnabled(False)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
