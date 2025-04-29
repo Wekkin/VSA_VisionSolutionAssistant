@@ -6,6 +6,7 @@ import os
 import json
 from datetime import datetime
 from UI.UI_DefectMatrix import DefectMatrixGenerator
+from UI.UI_ImageUpload import ImageUploader
 
 class StepBar(QWidget):
     def __init__(self, steps, current_step=0, parent=None):
@@ -646,7 +647,7 @@ class POCGenerator(QWidget):
         self.stack.addWidget(self.defect_matrix)
         
         # 第三步：图片上传
-        self.image_upload = ImageUploadStep()
+        self.image_upload = ImageUploader("")
         self.stack.addWidget(self.image_upload)
         
         # 第四步：光照配置
@@ -689,6 +690,8 @@ class POCGenerator(QWidget):
                     return
                 # 更新缺陷矩阵生成器的项目路径
                 self.defect_matrix.project_path = project_path
+                # 更新图片上传器的项目路径
+                self.image_upload.project_path = project_path
                 
             self.current_step += 1
             self.stack.setCurrentIndex(self.current_step)
