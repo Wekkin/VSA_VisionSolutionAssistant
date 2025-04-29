@@ -10,6 +10,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                              QSplitter, QMessageBox)
 from PyQt5.QtCore import Qt, QRectF, QPoint
 from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor, QPen
+import datetime
+import subprocess
 
 
 class ImageProcessor(QGraphicsView):
@@ -295,8 +297,28 @@ class PPTGeneratorApp(QMainWindow):
         title_label.setStyleSheet("font-size: 15px; font-weight: bold;")
         self.title_edit = QTextEdit()
         self.title_edit.setMaximumHeight(35)
+        
+        # 创建生成PPT按钮
+        self.btn_generate = QPushButton("生成PPT")
+        self.btn_generate.clicked.connect(self.generate_ppt)
+        self.btn_generate.setFixedSize(120, 35)  # 调整按钮高度与标题框一致
+        self.btn_generate.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                font-weight: bold;
+                border-radius: 4px;
+                padding: 5px;
+            }
+            QPushButton:hover {
+                background-color: #45a049;
+            }
+        """)
+        
+        # 将组件添加到标题布局中
         title_layout.addWidget(title_label)
-        title_layout.addWidget(self.title_edit)
+        title_layout.addWidget(self.title_edit, stretch=1)  # 让标题框占据更多空间
+        title_layout.addWidget(self.btn_generate)
 
         # 图片显示区域的水平分割器
         display_splitter = QSplitter(Qt.Horizontal)
@@ -354,13 +376,11 @@ class PPTGeneratorApp(QMainWindow):
         right_splitter.addWidget(title_widget)
         right_splitter.addWidget(display_splitter)
         right_splitter.addWidget(analysis_widget)
-        right_splitter.addWidget(bottom_widget)
 
         # 设置右侧分割器的比例
         right_splitter.setStretchFactor(0, 1)  # 标题
         right_splitter.setStretchFactor(1, 8)  # 图片显示
         right_splitter.setStretchFactor(2, 3)  # 分析
-        right_splitter.setStretchFactor(3, 1)  # 底部按钮
 
         # 将左右面板添加到主分割器
         main_splitter.addWidget(left_panel)
@@ -406,7 +426,8 @@ class PPTGeneratorApp(QMainWindow):
     def load_folders(self):
         folders = QFileDialog.getExistingDirectory(self, "选择包含图片的文件夹")
         if folders:
-            self.scan_images(Path(folders))
+            self.project_root = Path(folders)  # 保存项目根目录路径
+            self.scan_images(self.project_root)
 
     def scan_images(self, root_path):
         """扫描项目路径下的所有图片"""
@@ -513,93 +534,141 @@ class PPTGeneratorApp(QMainWindow):
             QMessageBox.warning(self, "警告", "未找到模板文件！")
             return
             
-        prs = Presentation(template_path)
-        # 获取模板的幻灯片尺寸
-        slide_width = prs.slide_width
-        slide_height = prs.slide_height
+        # 检查是否已选择项目目录
+        if not hasattr(self, 'project_root'):
+            QMessageBox.warning(self, "警告", "请先选择项目文件夹！")
+            return
 
-        for rel_path, data in self.image_data.items():
-            # 使用模板的布局创建新幻灯片
-            slide = prs.slides.add_slide(prs.slide_layouts[10])  # 使用第10个布局
+        try:
+            prs = Presentation(template_path)
+            # 获取模板的幻灯片尺寸
+            slide_width = prs.slide_width
+            slide_height = prs.slide_height
 
-            # 添加标题（如果布局中没有标题占位符，则创建一个）
-            if slide.shapes.title is None:
-                title = slide.shapes.add_textbox(
-                    Inches(2.3), Inches(0.5),# 左侧边距增加到2英寸，顶部边距增加到0.5英寸
-                    slide_width - Inches(3), Inches(0.5)# 宽度不变，高度减小到0.5英寸
-                )
-                title.text_frame.text = data['folder']
-            else:
-                slide.shapes.title.text = data['folder']
+            # 处理每张图片
+            for rel_path, data in self.image_data.items():
+                # 使用模板的布局创建新幻灯片
+                slide = prs.slides.add_slide(prs.slide_layouts[10])  # 使用第10个布局
 
-            try:
-                # 获取图片实际尺寸
-                with Image.open(data['full_path']) as img:
-                    img_width, img_height = img.size
-                    # 计算合适的显示高度（保持宽高比）
-                    target_height = Inches(3)  # 增加图片高度
-                    # 计算对应的宽度
-                    target_width = target_height * (img_width / img_height)
-                    
-                    # 设置固定的左侧边距，使图片靠左显示
-                    left = Inches(0.5)  # 增加左侧边距
-                    top = Inches(1.8)   # 增加顶部边距
-                    
-                    # 添加原图（靠左显示）
-                    original_img = slide.shapes.add_picture(
-                        data['full_path'],
-                        left, top,
-                        height=target_height
+                # 添加标题（如果布局中没有标题占位符，则创建一个）
+                if slide.shapes.title is None:
+                    title = slide.shapes.add_textbox(
+                        Inches(2.3), Inches(0.5),# 左侧边距增加到2英寸，顶部边距增加到0.5英寸
+                        slide_width - Inches(3), Inches(0.5)# 宽度不变，高度减小到0.5英寸
                     )
+                    title.text_frame.text = data['folder']
+                else:
+                    slide.shapes.title.text = data['folder']
 
-                # 添加裁剪图（右侧）
-                if data['crop_area']:
+                try:
+                    # 获取图片实际尺寸
                     with Image.open(data['full_path']) as img:
-                        cropped = img.crop(data['crop_area'])
-                        temp_path = f"temp_{Path(rel_path).name}"
-                        cropped.save(temp_path)
-
-                        # 计算裁剪图的合适大小
-                        crop_width, crop_height = cropped.size
-                        crop_target_height = Inches(4)  # 增加裁剪图高度
-                        crop_target_width = crop_target_height * (crop_width / crop_height)
+                        img_width, img_height = img.size
+                        # 计算合适的显示高度（保持宽高比）
+                        target_height = Inches(3)  # 增加图片高度
+                        # 计算对应的宽度
+                        target_width = target_height * (img_width / img_height)
                         
-                        # 计算右侧位置
-                        crop_left = slide_width - crop_target_width - Inches(0.5)
-                        crop_top = top  # 与原图顶部对齐
+                        # 设置固定的左侧边距，使图片靠左显示
+                        left = Inches(0.5)  # 增加左侧边距
+                        top = Inches(1.8)   # 增加顶部边距
                         
-                        slide.shapes.add_picture(
-                            temp_path,
-                            crop_left, crop_top,
-                            height=crop_target_height
+                        # 添加原图（靠左显示）
+                        original_img = slide.shapes.add_picture(
+                            data['full_path'],
+                            left, top,
+                            height=target_height
                         )
-                        os.remove(temp_path)
 
-                # 添加评估意见
-                # 在模板中预留一个文本框用于评估意见
-                comment_added = False
-                for shape in slide.shapes:
-                    if shape.has_text_frame and shape.text_frame.text == "评估意见":
-                        shape.text_frame.text = data['comment']
-                        comment_added = True
-                        break
-                
-                # 如果没有找到评估意见文本框，创建一个新的
-                if not comment_added:
-                    comment_box = slide.shapes.add_textbox(
-                        Inches(0.5), Inches(5.2),  # 调整文本框位置
-                        slide_width - Inches(1), Inches(0.3)  # 增加文本框高度
-                    )
-                    comment_box.text_frame.text = data['comment']
+                    # 添加裁剪图（右侧）
+                    if data.get('crop_area'):
+                        crop_x, crop_y, crop_w, crop_h = data['crop_area']
+                        # 确保坐标和尺寸都是正数
+                        crop_x = max(0, crop_x)
+                        crop_y = max(0, crop_y)
+                        crop_w = max(1, crop_w)
+                        crop_h = max(1, crop_h)
+                        
+                        with Image.open(data['full_path']) as img:
+                            # 确保裁剪区域不超出图片边界
+                            img_width, img_height = img.size
+                            crop_x = min(crop_x, img_width - 1)
+                            crop_y = min(crop_y, img_height - 1)
+                            crop_w = min(crop_w, img_width - crop_x)
+                            crop_h = min(crop_h, img_height - crop_y)
+                            
+                            # 执行裁剪
+                            cropped = img.crop((crop_x, crop_y, crop_x + crop_w, crop_y + crop_h))
+                            temp_path = f"temp_{Path(rel_path).name}"
+                            cropped.save(temp_path)
 
-            except Exception as e:
-                print(f"Error processing {rel_path}: {str(e)}")
-                continue
+                            # 计算裁剪图的合适大小
+                            crop_width, crop_height = cropped.size
+                            crop_target_height = Inches(4)  # 增加裁剪图高度
+                            crop_target_width = crop_target_height * (crop_width / crop_height)
+                            
+                            # 计算右侧位置
+                            crop_left = slide_width - crop_target_width - Inches(0.5)
+                            crop_top = top  # 与原图顶部对齐
+                            
+                            # 添加裁剪图到PPT
+                            slide.shapes.add_picture(
+                                temp_path,
+                                crop_left, crop_top,
+                                height=crop_target_height
+                            )
+                            # 清理临时文件
+                            os.remove(temp_path)
+                            print(f"Added cropped image to PPT: {crop_width}x{crop_height}")
 
-        # 保存生成的PPT
-        output_path = "AutoGenerated_Presentation.pptx"
-        prs.save(output_path)
-        self.statusBar().showMessage(f"PPT生成完成！保存至：{output_path}", 5000)
+                    # 添加评估意见
+                    # 在模板中预留一个文本框用于评估意见
+                    comment_added = False
+                    for shape in slide.shapes:
+                        if shape.has_text_frame and shape.text_frame.text == "评估意见":
+                            shape.text_frame.text = data['comment']
+                            comment_added = True
+                            break
+                    
+                    # 如果没有找到评估意见文本框，创建一个新的
+                    if not comment_added:
+                        comment_box = slide.shapes.add_textbox(
+                            Inches(0.5), Inches(5.2),  # 调整文本框位置
+                            slide_width - Inches(1), Inches(0.3)  # 增加文本框高度
+                        )
+                        comment_box.text_frame.text = data['comment']
+
+                except Exception as e:
+                    print(f"Error processing {rel_path}: {str(e)}")
+                    continue
+
+            # 生成输出文件名
+            project_name = self.project_root.name
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            output_filename = f"{project_name}_Report_{timestamp}.pptx"
+            output_path = self.project_root / output_filename
+
+            # 保存生成的PPT
+            prs.save(str(output_path))
+            self.statusBar().showMessage(f"PPT生成完成！保存至：{output_path}", 5000)
+            
+            # 询问是否打开生成的文件
+            reply = QMessageBox.question(self, '完成', 
+                                       f'PPT已生成到：\n{output_path}\n\n是否立即打开？',
+                                       QMessageBox.Yes | QMessageBox.No)
+            
+            if reply == QMessageBox.Yes:
+                # 使用系统默认程序打开PPT
+                if sys.platform == 'win32':
+                    os.startfile(str(output_path))
+                elif sys.platform == 'darwin':  # macOS
+                    subprocess.run(['open', str(output_path)])
+                else:  # linux
+                    subprocess.run(['xdg-open', str(output_path)])
+
+        except Exception as e:
+            QMessageBox.critical(self, "错误", f"生成PPT时发生错误：\n{str(e)}")
+            print(f"Error generating PPT: {str(e)}")
 
 
 if __name__ == '__main__':
