@@ -48,6 +48,8 @@ resources/splash_background.png
 *.jpg
 *.jpeg
 *.png
+!icons/*.png  # 允许图标文件
+!icons/*.ico
 *.bmp
 *.log
 resources/templates/*
