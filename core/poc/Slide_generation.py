@@ -610,8 +610,14 @@ class PPTGeneratorApp(QMainWindow):
                         slide_width - Inches(3), Inches(0.5)
                     )
                     title.text_frame.text = data['folder']
+                    # 设置标题字体大小和加粗
+                    title.text_frame.paragraphs[0].font.size = Pt(28)  # 增加字体大小
+                    title.text_frame.paragraphs[0].font.bold = False    # 设置为粗体
                 else:
                     slide.shapes.title.text = data['folder']
+                    # 设置标题字体大小和加粗
+                    slide.shapes.title.text_frame.paragraphs[0].font.size = Pt(28)  # 增加字体大小
+                    slide.shapes.title.text_frame.paragraphs[0].font.bold = True    # 设置为粗体
 
                 try:
                     # 添加原图
@@ -633,7 +639,7 @@ class PPTGeneratorApp(QMainWindow):
                     if cache_path and os.path.exists(cache_path):
                         with Image.open(cache_path) as cropped:
                             crop_width, crop_height = cropped.size
-                            crop_target_height = Inches(4)
+                            crop_target_height = Inches(3)  # 调整为3英寸，与原图一致
                             crop_target_width = crop_target_height * (crop_width / crop_height)
                             crop_left = slide_width - crop_target_width - Inches(0.5)
                             crop_top = top
