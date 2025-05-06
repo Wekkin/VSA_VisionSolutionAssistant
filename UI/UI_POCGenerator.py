@@ -1044,7 +1044,7 @@ class POCGenerator(QWidget):
                 self.prev_btn.setEnabled(True)
                 self.next_btn.setEnabled(False)
                 return
-            
+                
             self.current_step += 1
             self.stack.setCurrentIndex(self.current_step)
             self.step_bar.setCurrentStep(self.current_step)
@@ -1058,7 +1058,7 @@ class POCGenerator(QWidget):
         self.show()
         # 接受关闭事件
         event.accept()
-
+                
     def prevStep(self):
         if self.current_step > 0:
             self.current_step -= 1

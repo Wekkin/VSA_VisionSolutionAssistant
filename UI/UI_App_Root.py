@@ -424,7 +424,7 @@ class MainWindow(QMainWindow):
         
         # 隐藏按钮
         self.toggle_btn = QToolButton()
-        self.toggle_btn.setIcon(QIcon("icons/collapse.png"))  # 需要准备对应图标
+        self.toggle_btn.setIcon(QIcon("icons/menu.png"))  # 需要准备对应图标
         self.toggle_btn.setStyleSheet("""
             QToolButton {
                 border: none;
@@ -626,19 +626,23 @@ class MainWindow(QMainWindow):
             self.animation = QPropertyAnimation(self.sidebar_container, b"minimumWidth")
             self.animation.setDuration(200)
             self.animation.setStartValue(200)
-            self.animation.setEndValue(50)
+            self.animation.setEndValue(0)  # 改为0，完全隐藏
             self.animation.setEasingCurve(QEasingCurve.InOutQuart)
             self.animation.start()
-            self.toggle_btn.setIcon(QIcon("icons/expand.png"))  # 需要准备对应图标
+            self.toggle_btn.setIcon(QIcon("icons/menu.png"))
+            # 隐藏侧边栏内容
+            self.sidebar_container.setMaximumWidth(0)
         else:
             # 创建展开动画
             self.animation = QPropertyAnimation(self.sidebar_container, b"minimumWidth")
             self.animation.setDuration(200)
-            self.animation.setStartValue(50)
+            self.animation.setStartValue(0)
             self.animation.setEndValue(200)
             self.animation.setEasingCurve(QEasingCurve.InOutQuart)
             self.animation.start()
-            self.toggle_btn.setIcon(QIcon("icons/collapse.png"))  # 需要准备对应图标
+            self.toggle_btn.setIcon(QIcon("icons/menu.png"))
+            # 显示侧边栏内容
+            self.sidebar_container.setMaximumWidth(200)
             
         self.sidebar_expanded = not self.sidebar_expanded
 
@@ -654,6 +658,10 @@ class MainWindow(QMainWindow):
         self.integration_btn.setChecked(False)
         self.feature_btn.setChecked(False)
         self.stacked_widget.setCurrentIndex(0)
+        
+        # 如果侧边栏是收起状态，则展开
+        if not self.sidebar_expanded:
+            self.toggle_sidebar()
 
     def show_settings_page(self):
         """显示设置页面"""
@@ -711,46 +719,26 @@ class MainWindow(QMainWindow):
         self.stacked_widget.setCurrentIndex(self.config_page_index)
 
     def show_integration_page(self):
-        self.logger.info("切换到集成分析页面")
-        # 取消其他按钮的选中状态
-        self.project_btn.setChecked(False)
-        self.poc_btn.setChecked(False)
-        self.analysis_btn.setChecked(False)
-        self.config_btn.setChecked(False)
-        self.feature_btn.setChecked(False)
+        self.logger.info("尝试访问开发中的集成分析功能")
+        # 显示"功能开发中"的提示框
+        QMessageBox.information(self, 
+                              "功能开发中", 
+                              "集成分析功能正在开发中，敬请期待！",
+                              QMessageBox.Ok)
         
-        # 如果集成分析页面不存在，创建它
-        if not self.integration_analyzer:
-            from UI.UI_IntegrationAnalyzer import IntegrationAnalyzer
-            self.integration_analyzer = IntegrationAnalyzer()
-            self.stacked_widget.addWidget(self.integration_analyzer)
-            self.integration_page_index = self.stacked_widget.count() - 1
-        
-        # 显示集成分析页面
-        self.stacked_widget.setCurrentIndex(self.integration_page_index)
+        # 取消当前按钮的选中状态，保持在当前页面
+        self.integration_btn.setChecked(False)
 
     def show_extensions_page(self):
-        self.logger.info("切换到功能拓展页面")
-        # 取消其他按钮的选中状态
-        self.project_btn.setChecked(False)
-        self.poc_btn.setChecked(False)
-        self.analysis_btn.setChecked(False)
-        self.config_btn.setChecked(False)
-        self.integration_btn.setChecked(False)
+        self.logger.info("尝试访问开发中的功能拓展功能")
+        # 显示"功能开发中"的提示框
+        QMessageBox.information(self, 
+                              "功能开发中", 
+                              "功能拓展模块正在开发中，敬请期待！",
+                              QMessageBox.Ok)
         
-        # 如果功能拓展页面不存在，创建它
-        if not self.extensions_window:
-            from UI.UI_Extensions import ExtensionsWindow
-            # 由于ExtensionsWindow是QMainWindow，我们需要创建一个QWidget来包装它
-            container = QWidget()
-            layout = QVBoxLayout(container)
-            self.extensions_window = ExtensionsWindow()
-            layout.addWidget(self.extensions_window)
-            self.stacked_widget.addWidget(container)
-            self.extensions_page_index = self.stacked_widget.count() - 1
-        
-        # 显示功能拓展页面
-        self.stacked_widget.setCurrentIndex(self.extensions_page_index)
+        # 取消当前按钮的选中状态，保持在当前页面
+        self.feature_btn.setChecked(False)
 
     def show_analysis_page(self):
         self.logger.info("尝试访问开发中的缺陷分析功能")
