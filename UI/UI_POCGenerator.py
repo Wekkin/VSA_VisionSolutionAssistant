@@ -7,6 +7,7 @@ import json
 from datetime import datetime
 from UI.UI_DefectMatrix import DefectMatrixGenerator
 from UI.UI_ImageUpload import ImageUploader
+from core.poc.Slide_generation import PPTGeneratorApp  # 导入PPT生成器
 
 class StepBar(QWidget):
     def __init__(self, steps, current_step=0, parent=None):
@@ -965,7 +966,7 @@ class POCGenerator(QWidget):
         
         # 步骤条
         self.steps = ["RFQ完整性检查", "缺陷矩阵生成", "图片上传", "光照配置", 
-                     "自动生成PPT", "风险备注与标注", "文件夹整理"]
+                     "自动生成PPT"]
         self.step_bar = StepBar(self.steps, self.current_step)
         layout.addWidget(self.step_bar)
         
@@ -991,14 +992,6 @@ class POCGenerator(QWidget):
         # 第五步：自动生成PPT
         self.ppt_gen = PPTGenStep()
         self.stack.addWidget(self.ppt_gen)
-        
-        # 第六步：风险备注与标注
-        self.risk_note = RiskNoteStep()
-        self.stack.addWidget(self.risk_note)
-        
-        # 第七步：空文件夹清理
-        self.folder_clean = FolderCleanStep()
-        self.stack.addWidget(self.folder_clean)
         
         layout.addWidget(self.stack)
         
@@ -1027,6 +1020,31 @@ class POCGenerator(QWidget):
                 # 更新图片上传器的项目路径
                 self.image_upload.project_path = project_path
                 
+            # 处理第四步到第五步的转换
+            if self.current_step == 3:  # 光照配置完成后
+                # 获取项目路径
+                project_path = self.rfq_check.project_path
+                if not project_path:
+                    QMessageBox.warning(self, "警告", "请先选择项目路径！")
+                    return
+                
+                # 隐藏当前窗口
+                self.hide()
+                
+                # 创建并显示PPT生成器窗口
+                self.ppt_window = PPTGeneratorApp()
+                self.ppt_window.showMaximized()  # 全屏显示
+                
+                # 设置关闭事件处理
+                self.ppt_window.closeEvent = lambda event: self.on_ppt_window_closed(event)
+                
+                # 更新步骤
+                self.current_step += 1
+                self.step_bar.setCurrentStep(self.current_step)
+                self.prev_btn.setEnabled(True)
+                self.next_btn.setEnabled(False)
+                return
+            
             self.current_step += 1
             self.stack.setCurrentIndex(self.current_step)
             self.step_bar.setCurrentStep(self.current_step)
@@ -1034,6 +1052,13 @@ class POCGenerator(QWidget):
             if self.current_step == len(self.steps) - 1:
                 self.next_btn.setEnabled(False)
                 
+    def on_ppt_window_closed(self, event):
+        """PPT生成器窗口关闭时的处理"""
+        # 显示主窗口
+        self.show()
+        # 接受关闭事件
+        event.accept()
+
     def prevStep(self):
         if self.current_step > 0:
             self.current_step -= 1

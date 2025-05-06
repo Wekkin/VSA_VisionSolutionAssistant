@@ -275,6 +275,18 @@ class PPTGeneratorApp(QMainWindow):
         
         self.btn_load = QPushButton("选择图片文件夹")
         self.btn_load.clicked.connect(self.load_folders)
+        self.btn_load.setStyleSheet("""
+            QPushButton {
+                background: #1890ff;
+                color: white;
+                padding: 4px 16px;
+                border-radius: 4px;
+                border: none;
+            }
+            QPushButton:hover {
+                background: #40a9ff;
+            }
+        """)
         
         self.image_list = QListWidget()
         
@@ -299,6 +311,7 @@ class PPTGeneratorApp(QMainWindow):
         title_label.setStyleSheet("font-size: 15px; font-weight: bold;")
         self.title_edit = QTextEdit()
         self.title_edit.setMaximumHeight(35)
+        self.title_edit.textChanged.connect(self.on_title_changed)  # 添加文本变化监听
         
         # 创建生成PPT按钮
         self.btn_generate = QPushButton("生成PPT")
@@ -349,8 +362,9 @@ class PPTGeneratorApp(QMainWindow):
         # 添加到水平分割器
         display_splitter.addWidget(original_widget)
         display_splitter.addWidget(detail_widget)
-        display_splitter.setStretchFactor(0, 1)
-        display_splitter.setStretchFactor(1, 1)
+        display_splitter.setStretchFactor(0, 1)  # 设置原图展示框的拉伸因子为1
+        display_splitter.setStretchFactor(1, 1)  # 设置细节放大框的拉伸因子为1
+        display_splitter.setSizes([500, 500])  # 设置初始大小相等
 
         # 可行性分析区域
         analysis_widget = QWidget()
@@ -360,19 +374,9 @@ class PPTGeneratorApp(QMainWindow):
         analysis_label.setStyleSheet("font-size: 15px; font-weight: bold;")
         self.comment_edit = QTextEdit()
         self.comment_edit.setPlaceholderText("在此输入评估意见...")
+        self.comment_edit.textChanged.connect(self.on_comment_changed)  # 添加文本变化监听
         analysis_layout.addWidget(analysis_label)
         analysis_layout.addWidget(self.comment_edit)
-
-        # 底部按钮区域
-        bottom_widget = QWidget()
-        bottom_layout = QHBoxLayout(bottom_widget)
-        bottom_layout.setContentsMargins(5, 5, 5, 5)
-        self.btn_generate = QPushButton("生成PPT")
-        self.btn_generate.clicked.connect(self.generate_ppt)
-        self.btn_generate.setFixedSize(120, 40)
-        self.btn_generate.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold;")
-        bottom_layout.addStretch()
-        bottom_layout.addWidget(self.btn_generate)
 
         # 将组件添加到右侧垂直分割器
         right_splitter.addWidget(title_widget)
@@ -451,7 +455,7 @@ class PPTGeneratorApp(QMainWindow):
             print(f"Error loading records: {str(e)}")
 
     def save_records(self):
-        """保存裁剪记录到JSON文件"""
+        """保存记录到JSON文件"""
         try:
             if self.cache_dir and self.record_file:
                 records = {}
@@ -460,10 +464,12 @@ class PPTGeneratorApp(QMainWindow):
                         'crop_area': data.get('crop_area'),
                         'comment': data.get('comment', self.default_comment),
                         'folder': data.get('folder', ''),
+                        'folder_name': data.get('folder_name', ''),
                         'cache_path': data.get('cache_path')
                     }
                 with open(self.record_file, 'w', encoding='utf-8') as f:
                     json.dump(records, f, indent=2, ensure_ascii=False)
+                print("Records saved successfully")
         except Exception as e:
             print(f"Error saving records: {str(e)}")
 
@@ -490,7 +496,8 @@ class PPTGeneratorApp(QMainWindow):
                     abs_path = str(file_path.absolute())
                     self.image_data[file_name] = {
                         'full_path': abs_path,
-                        'folder': folder_name,
+                        'folder': folder_name,  # 默认使用文件夹名称
+                        'folder_name': folder_name,  # 保存原始文件夹名称
                         'comment': self.default_comment,
                         'crop_area': None
                     }
@@ -552,8 +559,11 @@ class PPTGeneratorApp(QMainWindow):
                     # 设置评估意见
                     self.comment_edit.setPlainText(img_info.get('comment', self.default_comment))
                     
-                    # 设置标题
-                    self.title_edit.setPlainText(img_info.get('folder', ''))
+                    # 设置标题（使用文件夹名称作为默认值）
+                    folder_name = img_info.get('folder', '')
+                    if not folder_name:  # 如果没有保存的标题，使用文件夹名称
+                        folder_name = img_info.get('folder_name', '')
+                    self.title_edit.setPlainText(folder_name)
                     
                     # 清除细节视图
                     self.detail_view.clear()
@@ -562,26 +572,20 @@ class PPTGeneratorApp(QMainWindow):
                 except Exception as e:
                     print(f"Error selecting image: {str(e)}")
 
-    def save_current_data(self):
-        """保存当前图片的数据"""
+    def on_title_changed(self):
+        """标题文本变化时的处理"""
         if self.current_image:
-            try:
-                img_info = self.image_data[self.current_image]
-                # 保存裁剪区域
-                if hasattr(self.image_processor, 'crop_area'):
-                    img_info['crop_area'] = self.image_processor.crop_area
-                # 保存评估意见
-                img_info['comment'] = self.comment_edit.toPlainText() or self.default_comment
-                # 保存标题
-                img_info['folder'] = self.title_edit.toPlainText()
-                print(f"Saved data for image: {self.current_image}")
-            except Exception as e:
-                print(f"Error saving current data: {str(e)}")
+            self.image_data[self.current_image]['folder'] = self.title_edit.toPlainText()
+            self.save_records()
+
+    def on_comment_changed(self):
+        """评估意见文本变化时的处理"""
+        if self.current_image:
+            self.image_data[self.current_image]['comment'] = self.comment_edit.toPlainText()
+            self.save_records()
 
     def generate_ppt(self):
         """生成PPT，使用缓存的裁剪图片"""
-        self.save_current_data()
-        
         # 使用模板文件创建演示文稿
         template_path = os.path.join("src", "template.pptx")
         if not os.path.exists(template_path):
@@ -641,7 +645,7 @@ class PPTGeneratorApp(QMainWindow):
                             crop_width, crop_height = cropped.size
                             crop_target_height = Inches(3)  # 调整为3英寸，与原图一致
                             crop_target_width = crop_target_height * (crop_width / crop_height)
-                            crop_left = slide_width - crop_target_width - Inches(0.5)
+                            crop_left = slide_width - crop_target_width - Inches(1.5)
                             crop_top = top
                             
                             slide.shapes.add_picture(
