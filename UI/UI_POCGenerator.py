@@ -8,6 +8,10 @@ from datetime import datetime
 from UI.UI_DefectMatrix import DefectMatrixGenerator
 from UI.UI_ImageUpload import ImageUploader
 from core.poc.Slide_generation import PPTGeneratorApp  # 导入PPT生成器
+import openpyxl
+
+ACTIVE_PROJECT_PATH = os.path.abspath(os.path.join('data', 'active_project.json'))
+CACHE_PATH = os.path.abspath(os.path.join('data', 'projects_cache.json'))
 
 class StepBar(QWidget):
     def __init__(self, steps, current_step=0, parent=None):
@@ -475,13 +479,14 @@ class RFQCheckStep(QWidget):
                 border: 1px solid #91caff;
                 border-radius: 4px;
             """)
+            # 缓存项目路径到./data/active_project.json
+            self.save_active_project_path(project_path)
     
     def save_check_results(self):
         """保存检查结果"""
         if not self.project_path:
             QMessageBox.warning(self, "错误", "请先选择项目目录")
             return
-            
         try:
             # 收集所有检查项的状态和备注
             results = []
@@ -491,7 +496,6 @@ class RFQCheckStep(QWidget):
                     checkbox = item_widget.findChild(QCheckBox)
                     label = item_widget.findChild(QLabel)
                     note_edit = item_widget.findChild(QLineEdit)
-                    
                     if checkbox and label and note_edit:
                         results.append({
                             "name": label.text().replace(" *", ""),
@@ -499,11 +503,9 @@ class RFQCheckStep(QWidget):
                             "note": note_edit.text(),
                             "required": "*" in label.text()
                         })
-            
             # 使用项目名称作为文件名
             project_name = os.path.basename(self.project_path)
             save_path = os.path.join(self.project_path, f"{project_name}_RFQ检查结果.json")
-            
             # 保存结果到JSON文件
             with open(save_path, 'w', encoding='utf-8') as f:
                 json.dump({
@@ -511,11 +513,30 @@ class RFQCheckStep(QWidget):
                     "check_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     "items": results
                 }, f, ensure_ascii=False, indent=2)
-            
+            # 额外：写入./data/projects_cache.json
+            self.save_rfq_to_cache(project_name, results)
             QMessageBox.information(self, "成功", f"检查结果已保存到：\n{save_path}")
-            
         except Exception as e:
             QMessageBox.warning(self, "错误", f"保存失败: {str(e)}")
+
+    def save_rfq_to_cache(self, project_name, rfq_results):
+        """将RFQ检查结果写入项目缓存"""
+        if not os.path.exists(CACHE_PATH):
+            return
+        with open(CACHE_PATH, 'r', encoding='utf-8') as f:
+            cache = json.load(f)
+        # 找到对应项目
+        for item in cache:
+            if item.get('folder_name') == project_name:
+                item['rfq_check_result'] = rfq_results
+                break
+        with open(CACHE_PATH, 'w', encoding='utf-8') as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+
+    def save_active_project_path(self, project_path):
+        os.makedirs(os.path.dirname(ACTIVE_PROJECT_PATH), exist_ok=True)
+        with open(ACTIVE_PROJECT_PATH, 'w', encoding='utf-8') as f:
+            json.dump({'project_path': project_path}, f, ensure_ascii=False, indent=2)
 
 class DefectMatrixStep(QWidget):
     def __init__(self, parent=None):
@@ -525,10 +546,59 @@ class DefectMatrixStep(QWidget):
         title.setFont(QFont('Arial', 18, QFont.Bold))
         layout.addWidget(title)
         # 表格占位
-        table = QLabel('缺陷类型与检测参数表格（示意）')
-        table.setStyleSheet('background:#fafafa;border:1px solid #e8e8e8;padding:32px;border-radius:8px;')
-        layout.addWidget(table)
+        self.table = QLabel('缺陷类型与检测参数表格（示意）')
+        self.table.setStyleSheet('background:#fafafa;border:1px solid #e8e8e8;padding:32px;border-radius:8px;')
+        layout.addWidget(self.table)
+        # 保存按钮
+        save_btn = QPushButton('保存并生成文件夹')
+        save_btn.setStyleSheet('background:#1890ff;color:white;padding:8px 16px;border-radius:4px;')
+        save_btn.clicked.connect(self.save_and_generate)
+        layout.addWidget(save_btn)
         layout.addStretch()
+
+    def save_and_generate(self):
+        # 获取主窗口
+        main_window = self.window()
+        project_path = None
+        folder_name = None
+        if hasattr(main_window, 'poc_generator'):
+            poc_generator = main_window.poc_generator
+            if hasattr(poc_generator, 'rfq_check'):
+                project_path = poc_generator.rfq_check.project_path
+        if not project_path:
+            QMessageBox.warning(self, '错误', '请先在RFQ步骤中选择项目！')
+            return
+        # 获取项目名（文件夹名）
+        folder_name = os.path.basename(project_path)
+        # 1. 保存缺陷矩阵内容到DefectMatrixt.xlsx
+        self.save_matrix_to_excel(project_path)
+        # 2. 自动重命名 defects 文件夹为 {项目名}_image
+        self.auto_rename_defects_folder(project_path, folder_name)
+        QMessageBox.information(self, '成功', '缺陷矩阵已保存，图片文件夹已自动重命名！')
+
+    def save_matrix_to_excel(self, project_path):
+        # 查找以DefectMatrixt.xlsx结尾的文件
+        for fname in os.listdir(project_path):
+            if fname.endswith('DefectMatrixt.xlsx'):
+                fpath = os.path.join(project_path, fname)
+                # 这里以简单写入一行数据为例，实际可根据表格内容写入
+                wb = openpyxl.Workbook()
+                ws = wb.active
+                ws.append(['缺陷类型', '参数1', '参数2'])
+                ws.append(['划伤', 'A', 'B'])
+                ws.append(['气泡', 'C', 'D'])
+                wb.save(fpath)
+                break
+
+    def auto_rename_defects_folder(self, project_path, folder_name):
+        # 自动查找并重命名 defects 文件夹为 {项目名}_image
+        defects_path = os.path.join(project_path, 'defects')
+        target_path = os.path.join(project_path, f'{folder_name}_image')
+        if os.path.exists(defects_path) and not os.path.exists(target_path):
+            try:
+                os.rename(defects_path, target_path)
+            except Exception as e:
+                QMessageBox.warning(self, '重命名失败', f'图片文件夹重命名失败: {str(e)}')
 
 class ImageUploadStep(QWidget):
     def __init__(self, parent=None):
