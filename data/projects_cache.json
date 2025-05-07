@@ -1,0 +1,362 @@
+[
+  {
+    "name": "华为_华为屏幕_V1",
+    "folder_name": "华为_华为屏幕_V1_20250507",
+    "company": "华为",
+    "create_date": "20250507",
+    "path": "/home/unitx/桌面/华为_华为屏幕_V1_20250507",
+    "remark": "搜索",
+    "project": "华为屏幕",
+    "version": "V1",
+    "rfq_check_result": [
+      {
+        "name": "是否新项目",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "预算情况",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "检测精度",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "节拍要求",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "产品种类",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "检测环境",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "安装空间",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "产品材质",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "产品尺寸",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "缺陷类型",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "最小缺陷尺寸",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "相机型号",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "光源要求",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "通讯协议",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "交付时间",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "客户联系人",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "项目名称",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "行业名称",
+        "checked": false,
+        "note": "",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "个元_个元屏幕_V2",
+    "folder_name": "个元_个元屏幕_V2_20250507",
+    "company": "个元",
+    "create_date": "20250507",
+    "path": "/home/unitx/桌面/个元_个元屏幕_V2_20250507",
+    "remark": "哈哈",
+    "project": "个元屏幕",
+    "version": "V2",
+    "rfq_check_result": [
+      {
+        "name": "是否新项目",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "预算情况",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "检测精度",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "节拍要求",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "产品种类",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "检测环境",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "安装空间",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "产品材质",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "产品尺寸",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "缺陷类型",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "最小缺陷尺寸",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "相机型号",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "光源要求",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "通讯协议",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "交付时间",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "客户联系人",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "项目名称",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "行业名称",
+        "checked": false,
+        "note": "",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "测试1_测试1_V1",
+    "folder_name": "测试1_测试1_V1_20250507",
+    "company": "测试1",
+    "create_date": "20250507",
+    "path": "/home/unitx/桌面/workflows/测试1_测试1_V1_20250507",
+    "remark": "测试1",
+    "project": "测试1",
+    "version": "V1",
+    "rfq_check_result": [
+      {
+        "name": "是否新项目",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "预算情况",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "检测精度",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "节拍要求",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "产品种类",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "检测环境",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "安装空间",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "产品材质",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "产品尺寸",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "缺陷类型",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "最小缺陷尺寸",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "相机型号",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "光源要求",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "通讯协议",
+        "checked": false,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "交付时间",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "客户联系人",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "项目名称",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "行业名称",
+        "checked": false,
+        "note": "",
+        "required": true
+      }
+    ]
+  }
+]

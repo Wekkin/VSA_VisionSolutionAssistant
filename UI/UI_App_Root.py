@@ -9,6 +9,7 @@ from PyQt5.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, QUrl
 from PyQt5.QtGui import QIcon, QPixmap, QPalette, QColor, QFont, QDesktopServices
 from utils.logger import Logger
 from UI.UI_Settings import SettingsPage
+from UI.UI_ProjectManagement import ProjectManagement
 
 class SidebarButton(QPushButton):
     def __init__(self, text, icon_path=None, parent=None):
@@ -588,11 +589,11 @@ class MainWindow(QMainWindow):
         home_layout.addWidget(scroll_area)
         
         # 将首页添加到堆叠窗口
-        self.stacked_widget.addWidget(home_page)
+        self.project_management = ProjectManagement()
+        self.stacked_widget.addWidget(self.project_management)
         self.home_page_index = 0
         
         # 创建并添加设置页面
-        from UI.UI_Settings import SettingsPage
         self.settings_page = SettingsPage()
         self.stacked_widget.addWidget(self.settings_page)
         self.settings_page_index = self.stacked_widget.count() - 1

@@ -9,7 +9,7 @@ class SettingsPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.logger = Logger()
-        self.config_file = 'config/settings.json'
+        self.config_file = os.path.join('data', 'settings.json')
         self.settings = self.load_settings()
         self.initUI()
         
@@ -123,9 +123,8 @@ class SettingsPage(QWidget):
     def load_settings(self):
         """加载设置"""
         try:
-            if not os.path.exists('config'):
-                os.makedirs('config')
-            
+            if not os.path.exists('data'):
+                os.makedirs('data')
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     return json.load(f)
@@ -141,24 +140,18 @@ class SettingsPage(QWidget):
             settings = {
                 'project_path': self.path_edit.text()
             }
-            
-            if not os.path.exists('config'):
-                os.makedirs('config')
-                
+            if not os.path.exists('data'):
+                os.makedirs('data')
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=4)
-                
             self.logger.info("设置已保存")
             self.settings = settings
-            
             # 显示保存成功
             self.status_label.setText("✓ 设置已保存")
             self.status_label.setStyleSheet("color: #52c41a;")  # 绿色
             self.save_btn.setEnabled(False)  # 禁用保存按钮
-            
             # 弹出提示
             QMessageBox.information(self, "保存成功", "设置已成功保存！")
-            
         except Exception as e:
             self.logger.error(f"保存设置失败: {str(e)}")
             QMessageBox.critical(self, "保存失败", f"保存设置失败: {str(e)}")
@@ -183,4 +176,6 @@ class SettingsPage(QWidget):
             
     def get_project_path(self):
         """获取项目路径"""
+        # 每次都重新读取，确保变更能被检测到
+        self.settings = self.load_settings()
         return self.settings.get('project_path', '') 

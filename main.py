@@ -6,12 +6,13 @@ import time  # 导入time模块
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QProgressBar
 from PyQt5.QtGui import QIcon
 from UI.UI_App_Root import MainWindow
 from utils.db_manager import DBManager
 from utils.logger import Logger
 from splash_screen import CustomSplashScreen  # 修复导入路径
+
 
 def main():
     # 初始化日志记录器

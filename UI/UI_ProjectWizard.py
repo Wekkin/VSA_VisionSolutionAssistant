@@ -210,28 +210,31 @@ class ProjectWizard(QDialog):
             
             # 创建子文件夹
             os.makedirs(os.path.join(project_path, f"{folder_name}_image"), exist_ok=True)
-            os.makedirs(os.path.join(project_path, f"{folder_name}_config"), exist_ok=True)
-            os.makedirs(os.path.join(project_path, f"{folder_name}_Defectmatrix"), exist_ok=True)
             
-            # 保存项目信息
-            project_info = {
-                'company': company,
-                'project': project,
-                'version': version,
-                'name': project_name,
-                'create_date': current_date,
-                'remark': self.remark_edit.toPlainText(),
-                'path': project_path
-            }
-            
-            info_file = os.path.join(project_path, f"{folder_name}_config", "project_info.json")
-            with open(info_file, 'w', encoding='utf-8') as f:
-                json.dump(project_info, f, ensure_ascii=False, indent=4)
-                
             self.logger.info(f"项目创建成功: {project_path}")
             QMessageBox.information(self, "成功", "项目创建成功！")
             self.accept()
             
         except Exception as e:
             self.logger.error(f"创建项目失败: {str(e)}")
-            QMessageBox.critical(self, "错误", f"创建项目失败: {str(e)}") 
+            QMessageBox.critical(self, "错误", f"创建项目失败: {str(e)}")
+
+    def get_project_info(self):
+        company = self.company_edit.text().strip()
+        project = self.project_edit.text().strip()
+        version = self.version_edit.text().strip()
+        project_name = f"{company}_{project}_{version}"
+        current_date = datetime.now().strftime("%Y%m%d")
+        folder_name = f"{project_name}_{current_date}"
+        base_path = self.settings.get('project_path', '')
+        project_path = os.path.join(base_path, folder_name)
+        return {
+            'company': company,
+            'project': project,
+            'version': version,
+            'name': project_name,
+            'folder_name': folder_name,
+            'project_path': project_path,
+            'remark': self.remark_edit.toPlainText(),
+            'create_date': current_date
+        } 
