@@ -619,6 +619,9 @@ class MainWindow(QMainWindow):
         # 设置首页按钮为选中状态
         self.project_btn.setChecked(True)
 
+        # 将窗口居中显示
+        self.center_window()
+
     def toggle_sidebar(self):
         """切换侧边栏显示/隐藏"""
         if self.sidebar_expanded:
@@ -891,6 +894,14 @@ class MainWindow(QMainWindow):
         card = ProjectCard(project_info, self)
         
         return card
+
+    def center_window(self):
+        """将窗口居中显示"""
+        screen_geometry = QApplication.desktop().screenGeometry()
+        window_geometry = self.geometry()
+        x = (screen_geometry.width() - window_geometry.width()) // 2
+        y = (screen_geometry.height() - window_geometry.height()) // 2
+        self.move(x, y)
 
 def main():
     app = QApplication(sys.argv)
