@@ -1,0 +1,262 @@
+[
+  {
+    "name": "洽兴_240141&240142瓶身盖杆检测_V2",
+    "folder_name": "洽兴_240141&240142瓶身盖杆检测_V2_20250508",
+    "company": "洽兴",
+    "create_date": "20250508",
+    "path": "/home/unitx/桌面/workflows/洽兴_240141&240142瓶身盖杆检测_V2_20250508",
+    "remark": "更新",
+    "project": "240141&240142瓶身盖杆检测",
+    "version": "V2",
+    "rfq_check_result": [
+      {
+        "name": "是否新项目",
+        "checked": false,
+        "note": "否",
+        "required": true
+      },
+      {
+        "name": "预算情况",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "检测精度",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "节拍要求",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "产品种类",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "检测环境",
+        "checked": true,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "安装空间",
+        "checked": true,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "产品材质",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "产品尺寸",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "缺陷类型",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "最小缺陷尺寸",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "相机型号",
+        "checked": true,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "光源要求",
+        "checked": true,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "通讯协议",
+        "checked": true,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "交付时间",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "客户联系人",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "项目名称",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "行业名称",
+        "checked": true,
+        "note": "",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "洽兴_240102瓶身检测_V3",
+    "folder_name": "洽兴_240102瓶身检测_V3_20250508",
+    "company": "洽兴",
+    "create_date": "20250508",
+    "path": "/home/unitx/桌面/workflows/洽兴_240102瓶身检测_V3_20250508",
+    "remark": "",
+    "project": "240102瓶身检测",
+    "version": "V3",
+    "rfq_check_result": [
+      {
+        "name": "是否新项目",
+        "checked": false,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "预算情况",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "检测精度",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "节拍要求",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "产品种类",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "检测环境",
+        "checked": true,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "安装空间",
+        "checked": true,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "产品材质",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "产品尺寸",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "缺陷类型",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "最小缺陷尺寸",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "相机型号",
+        "checked": true,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "光源要求",
+        "checked": true,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "通讯协议",
+        "checked": true,
+        "note": "",
+        "required": false
+      },
+      {
+        "name": "交付时间",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "客户联系人",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "项目名称",
+        "checked": true,
+        "note": "",
+        "required": true
+      },
+      {
+        "name": "行业名称",
+        "checked": false,
+        "note": "",
+        "required": true
+      }
+    ]
+  },
+  {
+    "name": "洽兴_232417-E瓶身检测_V4",
+    "folder_name": "洽兴_232417-E瓶身检测_V4_20250508",
+    "company": "洽兴",
+    "create_date": "20250508",
+    "path": "/home/unitx/桌面/workflows/洽兴_232417-E瓶身检测_V4_20250508",
+    "remark": "",
+    "project": "232417-E瓶身检测",
+    "version": "V4"
+  },
+  {
+    "name": "超煜电子_金属壳体节拍分析_V1",
+    "folder_name": "超煜电子_金属壳体节拍分析_V1_20250509",
+    "company": "超煜电子",
+    "create_date": "20250509",
+    "path": "/home/unitx/桌面/workflows/超煜电子_金属壳体节拍分析_V1_20250509",
+    "remark": "该产品之前已经做过打光测试，此次客户需要兼容6款产品，综合节拍不能超过13S/pcs，需要我们评估下视觉的整体节拍，给到客户初步的回复",
+    "project": "金属壳体节拍分析",
+    "version": "V1"
+  }
+]
