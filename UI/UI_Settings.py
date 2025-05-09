@@ -4,12 +4,16 @@ from PyQt5.QtCore import Qt, QTimer
 from utils.logger import Logger
 import json
 import os
+from pathlib import Path
+import traceback
 
 class SettingsPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.logger = Logger()
-        self.config_file = os.path.join('data', 'settings.json')
+        home_dir = str(Path.home())
+        self.config_dir = os.path.join(home_dir, '.vsa', 'config')
+        self.config_file = os.path.join(self.config_dir, 'settings.json')
         self.settings = self.load_settings()
         self.initUI()
         
@@ -114,23 +118,29 @@ class SettingsPage(QWidget):
             self.path_edit.text()
         )
         if folder:
+            self.logger.info(f"[设置] 用户选择项目文件夹: {folder}")
             self.path_edit.setText(folder)
-            self.logger.info(f"已选择项目文件夹: {folder}")
             self.save_btn.setEnabled(True)  # 启用保存按钮
             self.status_label.setText("设置已更改，请点击保存")
             self.status_label.setStyleSheet("color: #faad14;")  # 黄色警告
+        else:
+            self.logger.info("[设置] 用户取消选择项目文件夹")
             
     def load_settings(self):
         """加载设置"""
         try:
-            if not os.path.exists('data'):
-                os.makedirs('data')
+            if not os.path.exists(self.config_dir):
+                os.makedirs(self.config_dir)
             if os.path.exists(self.config_file):
                 with open(self.config_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    settings = json.load(f)
+                self.logger.info(f"[设置] 成功加载设置: {settings}")
+                return settings
+            self.logger.info("[设置] 未找到设置文件，返回空设置")
             return {}
         except Exception as e:
-            self.logger.error(f"加载设置失败: {str(e)}")
+            tb = traceback.format_exc()
+            self.logger.error(f"[设置] 加载设置失败: {str(e)}\n{tb}")
             QMessageBox.warning(self, "加载失败", f"加载设置失败: {str(e)}")
             return {}
             
@@ -140,11 +150,11 @@ class SettingsPage(QWidget):
             settings = {
                 'project_path': self.path_edit.text()
             }
-            if not os.path.exists('data'):
-                os.makedirs('data')
+            if not os.path.exists(self.config_dir):
+                os.makedirs(self.config_dir)
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(settings, f, ensure_ascii=False, indent=4)
-            self.logger.info("设置已保存")
+            self.logger.info(f"[设置] 设置已保存: {settings}")
             self.settings = settings
             # 显示保存成功
             self.status_label.setText("✓ 设置已保存")
@@ -153,7 +163,8 @@ class SettingsPage(QWidget):
             # 弹出提示
             QMessageBox.information(self, "保存成功", "设置已成功保存！")
         except Exception as e:
-            self.logger.error(f"保存设置失败: {str(e)}")
+            tb = traceback.format_exc()
+            self.logger.error(f"[设置] 保存设置失败: {str(e)}\n{tb}")
             QMessageBox.critical(self, "保存失败", f"保存设置失败: {str(e)}")
             
     def reset_settings(self):
@@ -165,14 +176,15 @@ class SettingsPage(QWidget):
             QMessageBox.Yes | QMessageBox.No,
             QMessageBox.No
         )
-        
         if reply == QMessageBox.Yes:
+            self.logger.info("[设置] 用户确认重置所有设置")
             self.path_edit.clear()
             self.settings = {}
             self.save_btn.setEnabled(True)
             self.status_label.setText("设置已重置，请点击保存")
             self.status_label.setStyleSheet("color: #faad14;")  # 黄色警告
-            self.logger.info("设置已重置")
+        else:
+            self.logger.info("[设置] 用户取消重置设置")
             
     def get_project_path(self):
         """获取项目路径"""

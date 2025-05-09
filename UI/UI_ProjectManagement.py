@@ -9,8 +9,10 @@ from PyQt5.QtGui import QIcon, QFont, QDesktopServices
 from PyQt5.QtCore import QUrl
 from utils.logger import Logger
 from PyQt5.QtWidgets import QProgressBar
+from pathlib import Path
+from utils.path_utils import get_resource_path
 
-CACHE_PATH = os.path.abspath(os.path.join('data', 'projects_cache.json'))
+CACHE_PATH = os.path.join(str(Path.home()), '.vsa', 'data', 'projects_cache.json')
 
 class ProjectCard(QFrame):
     def __init__(self, project_info, parent=None):
@@ -74,7 +76,7 @@ class ProjectCard(QFrame):
         
         # info按钮
         info_btn = QPushButton()
-        info_btn.setIcon(QIcon("icons/info.png"))
+        info_btn.setIcon(QIcon(get_resource_path("icons/info.png")))
         info_btn.setIconSize(QSize(20, 20))
         info_btn.setToolTip("查看项目详情")
         info_btn.setFixedSize(32, 32)
@@ -93,7 +95,7 @@ class ProjectCard(QFrame):
         
         # 删除按钮
         delete_btn = QPushButton()
-        delete_btn.setIcon(QIcon("icons/delete.png"))
+        delete_btn.setIcon(QIcon(get_resource_path("icons/delete.png")))
         delete_btn.setIconSize(QSize(20, 20))
         delete_btn.setToolTip("删除项目")
         delete_btn.setFixedSize(32, 32)
@@ -258,13 +260,19 @@ class ProjectCard(QFrame):
             try:
                 # 删除项目文件夹
                 path = self.project_info.get('path', '')
+                folder_name = self.project_info.get('folder_name', '')
                 if path and os.path.exists(path):
                     shutil.rmtree(path)
-                    
+                # 删除缓存文件中的项目信息
+                if os.path.exists(CACHE_PATH):
+                    with open(CACHE_PATH, 'r', encoding='utf-8') as f:
+                        cache = json.load(f)
+                    cache = [item for item in cache if item.get('folder_name') != folder_name]
+                    with open(CACHE_PATH, 'w', encoding='utf-8') as f:
+                        json.dump(cache, f, ensure_ascii=False, indent=2)
                 # 通知主窗口刷新项目列表
                 if self.parent_window:
                     self.parent_window.refresh_project_list()
-                    
             except Exception as e:
                 error_box = QMessageBox(self)
                 error_box.setWindowTitle("错误")
@@ -345,7 +353,7 @@ class ProjectManagement(QWidget):
         
         # 刷新按钮
         self.refresh_btn = QPushButton()
-        self.refresh_btn.setIcon(QIcon("icons/refresh.png"))
+        self.refresh_btn.setIcon(QIcon(get_resource_path("icons/refresh.png")))
         self.refresh_btn.setIconSize(QSize(20, 20))
         self.refresh_btn.setToolTip("刷新项目列表")
         self.refresh_btn.setStyleSheet("""
@@ -532,11 +540,11 @@ class ProjectManagement(QWidget):
             os.makedirs(image_dir, exist_ok=True)
             os.makedirs(rfq_dir, exist_ok=True)
             # 3. 复制模板表格
-            src_cam = os.path.abspath(os.path.join('src', 'CameraConfig.xlsx'))
+            src_cam = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src', 'CameraConfig.xlsx')
             dst_cam = os.path.join(project_dir, f"{folder_name}_CameraConfig.xlsx")
             if os.path.exists(src_cam):
                 shutil.copy(src_cam, dst_cam)
-            src_def = os.path.abspath(os.path.join('src', 'DefectMatrixt.xlsx'))
+            src_def = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'src', 'DefectMatrixt.xlsx')
             dst_def = os.path.join(project_dir, f"{folder_name}_DefectMatrixt.xlsx")
             if os.path.exists(src_def):
                 shutil.copy(src_def, dst_def)

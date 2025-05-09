@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import datetime
+from pathlib import Path
 
 class Logger:
     _instance = None
@@ -13,12 +14,14 @@ class Logger:
     
     def _initialize_logger(self):
         """初始化日志配置"""
-        # 创建logs目录
-        if not os.path.exists('logs'):
-            os.makedirs('logs')
+        # 在用户主目录下创建logs目录
+        home_dir = str(Path.home())
+        logs_dir = os.path.join(home_dir, '.vsa', 'logs')
+        if not os.path.exists(logs_dir):
+            os.makedirs(logs_dir)
             
         # 设置日志文件名（按日期）
-        log_file = f'logs/vsa_{datetime.now().strftime("%Y%m%d")}.log'
+        log_file = os.path.join(logs_dir, f'vsa_{datetime.now().strftime("%Y%m%d")}.log')
         
         # 创建logger实例
         self.logger = logging.getLogger('VSA')

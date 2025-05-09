@@ -1,9 +1,11 @@
 import sqlite3
 from pathlib import Path
+import os
 
 class DBManager:
     def __init__(self):
-        self.db_path = Path('data/vsa.db')
+        home_dir = str(Path.home())
+        self.db_path = Path(home_dir) / '.vsa' / 'data' / 'vsa.db'
         self.connection = None
         self.cursor = None
         

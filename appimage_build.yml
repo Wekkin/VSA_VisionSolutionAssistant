@@ -1,0 +1,28 @@
+version: 1
+script:
+  - mkdir -p AppDir/usr/bin
+  - mkdir -p AppDir/usr/share/applications
+  - mkdir -p AppDir/usr/share/icons/hicolor/256x256/apps
+  - cp dist/VSA视觉方案助手 AppDir/usr/bin/
+  - cp icons/benzene-ring.png AppDir/usr/share/icons/hicolor/256x256/apps/vsa.png
+  - |
+    cat > AppDir/usr/share/applications/vsa.desktop << EOL
+    [Desktop Entry]
+    Name=VSA视觉方案助手
+    Exec=VSA视觉方案助手
+    Icon=vsa
+    Type=Application
+    Categories=Utility;
+    Comment=视觉方案助手
+    EOL
+  - |
+    cat > AppDir/AppRun << EOL
+    #!/bin/sh
+    cd "\${APPDIR}/usr/bin"
+    exec "\${APPDIR}/usr/bin/VSA视觉方案助手" "$@"
+    EOL
+  - chmod +x AppDir/AppRun
+  - chmod +x AppDir/usr/bin/VSA视觉方案助手
+  - wget -c "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage"
+  - chmod +x appimagetool-x86_64.AppImage
+  - ./appimagetool-x86_64.AppImage AppDir VSA视觉方案助手-x86_64.AppImage 

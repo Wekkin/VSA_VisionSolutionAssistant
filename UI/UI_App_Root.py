@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+import traceback
 from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
                            QPushButton, QLabel, QListWidget, QStackedWidget, QFrame,
                            QLineEdit, QProgressBar, QScrollArea, QSplitter, QToolButton,
@@ -10,6 +11,7 @@ from PyQt5.QtGui import QIcon, QPixmap, QPalette, QColor, QFont, QDesktopService
 from utils.logger import Logger
 from UI.UI_Settings import SettingsPage
 from UI.UI_ProjectManagement import ProjectManagement
+from utils.path_utils import get_resource_path
 
 class SidebarButton(QPushButton):
     def __init__(self, text, icon_path=None, parent=None):
@@ -99,7 +101,7 @@ class ProjectCard(QFrame):
         
         # 打开按钮
         open_btn = QPushButton()
-        open_btn.setIcon(QIcon("icons/folder-open.png"))
+        open_btn.setIcon(QIcon(get_resource_path("icons/folder-open.png")))
         open_btn.setIconSize(QSize(20, 20))
         open_btn.setToolTip("打开项目文件夹")
         open_btn.setFixedSize(32, 32)
@@ -118,7 +120,7 @@ class ProjectCard(QFrame):
         
         # 删除按钮
         delete_btn = QPushButton()
-        delete_btn.setIcon(QIcon("icons/delete.png"))
+        delete_btn.setIcon(QIcon(get_resource_path("icons/delete.png")))
         delete_btn.setIconSize(QSize(20, 20))
         delete_btn.setToolTip("删除项目")
         delete_btn.setFixedSize(32, 32)
@@ -425,7 +427,7 @@ class MainWindow(QMainWindow):
         
         # 隐藏按钮
         self.toggle_btn = QToolButton()
-        self.toggle_btn.setIcon(QIcon("icons/menu.png"))  # 需要准备对应图标
+        self.toggle_btn.setIcon(QIcon(get_resource_path("icons/menu.png")))
         self.toggle_btn.setStyleSheet("""
             QToolButton {
                 border: none;
@@ -444,12 +446,12 @@ class MainWindow(QMainWindow):
         sidebar_layout.addLayout(logo_layout)
         
         # 侧边栏按钮
-        self.project_btn = SidebarButton("项目管理", "icons/project.png")
-        self.poc_btn = SidebarButton("POC制作", "icons/poc.png")
-        self.analysis_btn = SidebarButton("缺陷分析", "icons/analysis.png")
-        self.config_btn = SidebarButton("配置记录", "icons/config.png")
-        self.integration_btn = SidebarButton("集成分析", "icons/integration.png")
-        self.feature_btn = SidebarButton("功能拓展", "icons/feature.png")
+        self.project_btn = SidebarButton("项目管理", get_resource_path("icons/project.png"))
+        self.poc_btn = SidebarButton("POC制作", get_resource_path("icons/poc.png"))
+        self.analysis_btn = SidebarButton("缺陷分析", get_resource_path("icons/analysis.png"))
+        self.config_btn = SidebarButton("配置记录", get_resource_path("icons/config.png"))
+        self.integration_btn = SidebarButton("集成分析", get_resource_path("icons/integration.png"))
+        self.feature_btn = SidebarButton("功能拓展", get_resource_path("icons/feature.png"))
         
         sidebar_layout.addWidget(self.project_btn)
         sidebar_layout.addWidget(self.poc_btn)
@@ -513,7 +515,7 @@ class MainWindow(QMainWindow):
         
         # 刷新按钮
         refresh_btn = QPushButton()
-        refresh_btn.setIcon(QIcon("icons/refresh.png"))
+        refresh_btn.setIcon(QIcon(get_resource_path("icons/refresh.png")))
         refresh_btn.setIconSize(QSize(20, 20))
         refresh_btn.setToolTip("刷新项目列表")
         refresh_btn.setStyleSheet("""
@@ -633,7 +635,7 @@ class MainWindow(QMainWindow):
             self.animation.setEndValue(0)  # 改为0，完全隐藏
             self.animation.setEasingCurve(QEasingCurve.InOutQuart)
             self.animation.start()
-            self.toggle_btn.setIcon(QIcon("icons/menu.png"))
+            self.toggle_btn.setIcon(QIcon(get_resource_path("icons/menu.png")))
             # 隐藏侧边栏内容
             self.sidebar_container.setMaximumWidth(0)
         else:
@@ -644,7 +646,7 @@ class MainWindow(QMainWindow):
             self.animation.setEndValue(200)
             self.animation.setEasingCurve(QEasingCurve.InOutQuart)
             self.animation.start()
-            self.toggle_btn.setIcon(QIcon("icons/menu.png"))
+            self.toggle_btn.setIcon(QIcon(get_resource_path("icons/menu.png")))
             # 显示侧边栏内容
             self.sidebar_container.setMaximumWidth(200)
             
@@ -696,7 +698,7 @@ class MainWindow(QMainWindow):
         # 如果POC生成器页面不存在，创建它
         if not self.poc_generator:
             from UI.UI_POCGenerator import POCGenerator
-            self.poc_generator = POCGenerator()
+            self.poc_generator = POCGenerator(parent=self)
             self.stacked_widget.addWidget(self.poc_generator)
             self.poc_page_index = self.stacked_widget.count() - 1
         
@@ -758,75 +760,69 @@ class MainWindow(QMainWindow):
     def show_project_wizard(self):
         """显示项目创建向导"""
         from UI.UI_ProjectWizard import ProjectWizard
-        
-        # 检查是否已设置默认项目路径
-        if not self.settings_page:
-            self.settings_page = SettingsPage()
-        
-        project_path = self.settings_page.get_project_path()
-        if not project_path:
-            reply = QMessageBox.warning(
-                self,
-                "未设置项目路径",
-                "您还未设置默认项目路径，是否现在设置？",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes
-            )
-            if reply == QMessageBox.Yes:
-                self.show_settings_page()
-            return
-            
-        # 创建并显示项目向导
-        wizard = ProjectWizard(self)
-        if wizard.exec_() == QDialog.Accepted:
-            # 刷新项目列表
-            self.refresh_project_list()
-            
+        try:
+            # 检查是否已设置默认项目路径
+            if not self.settings_page:
+                self.settings_page = SettingsPage()
+            project_path = self.settings_page.get_project_path()
+            self.logger.info(f"[主窗口] show_project_wizard 当前默认项目路径: {project_path}")
+            if not project_path:
+                reply = QMessageBox.warning(
+                    self,
+                    "未设置项目路径",
+                    "您还未设置默认项目路径，是否现在设置？",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes
+                )
+                if reply == QMessageBox.Yes:
+                    self.show_settings_page()
+                return
+            # 创建并显示项目向导
+            wizard = ProjectWizard(self)
+            if wizard.exec_() == QDialog.Accepted:
+                self.logger.info("[主窗口] 新建项目完成，刷新项目列表")
+                self.refresh_project_list()
+        except Exception as e:
+            tb = traceback.format_exc()
+            self.logger.error(f"[主窗口] show_project_wizard 异常: {str(e)}\n{tb}")
+            QMessageBox.critical(self, "错误", f"新建项目弹窗异常: {str(e)}")
+
     def refresh_project_list(self):
         """刷新项目列表"""
         try:
+            self.logger.info("[主窗口] 开始刷新项目列表")
             # 清空现有项目数据
             self.projects_data = []
-            
             # 获取项目根目录
             if not self.settings_page:
                 self.settings_page = SettingsPage()
             base_path = self.settings_page.get_project_path()
-            
+            self.logger.info(f"[主窗口] 项目根目录: {base_path}")
             if not base_path or not os.path.exists(base_path):
-                self.logger.warning("项目路径不存在")
+                self.logger.warning("[主窗口] 项目路径不存在")
                 return
-            
             # 获取所有项目文件夹
             for folder_name in os.listdir(base_path):
                 folder_path = os.path.join(base_path, folder_name)
                 if not os.path.isdir(folder_path):
                     continue
-                    
-                # 检查是否是项目文件夹（包含config子文件夹和project_info.json）
                 config_folder = os.path.join(folder_path, f"{folder_name}_config")
                 info_file = os.path.join(config_folder, "project_info.json")
-                
                 if os.path.exists(info_file):
                     try:
                         with open(info_file, 'r', encoding='utf-8') as f:
                             project_info = json.load(f)
-                            # 计算项目进度
                             project_info['progress'] = self.calculate_project_progress(folder_path)
                             self.projects_data.append(project_info)
                     except Exception as e:
-                        self.logger.error(f"读取项目信息失败: {str(e)}")
+                        self.logger.error(f"[主窗口] 读取项目信息失败: {str(e)}")
                         continue
-            
-            # 按创建时间倒序排序
             self.projects_data.sort(key=lambda x: x.get('create_date', ''), reverse=True)
-            
-            # 更新项目列表显示
             self.update_project_cards()
-            self.logger.info("项目列表已刷新")
-            
+            self.logger.info("[主窗口] 项目列表已刷新")
         except Exception as e:
-            self.logger.error(f"刷新项目列表失败: {str(e)}")
+            tb = traceback.format_exc()
+            self.logger.error(f"[主窗口] 刷新项目列表失败: {str(e)}\n{tb}")
             QMessageBox.warning(self, "错误", f"刷新项目列表失败: {str(e)}")
 
     def calculate_project_progress(self, project_path):

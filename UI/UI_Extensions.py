@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout, QH
                            QSpacerItem, QSizePolicy)
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QIcon, QFont, QColor
+from utils.path_utils import get_resource_path
 
 class PluginCard(QFrame):
     def __init__(self, name, description, is_enabled=False, parent=None):
@@ -243,7 +244,7 @@ class ExtensionsWindow(QMainWindow):
         
         # API设置按钮
         api_btn = QPushButton("API 接口设置")
-        api_btn.setIcon(QIcon("icons/api.png"))
+        api_btn.setIcon(QIcon(get_resource_path("icons/api.png")))
         api_btn.clicked.connect(self.show_api_settings)
         api_btn.setStyleSheet("""
             QPushButton {

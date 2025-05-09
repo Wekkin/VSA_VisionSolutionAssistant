@@ -5,6 +5,8 @@ from utils.logger import Logger
 import os
 import json
 from datetime import datetime
+from pathlib import Path
+import traceback
 
 class ProjectWizard(QDialog):
     def __init__(self, parent=None):
@@ -137,31 +139,32 @@ class ProjectWizard(QDialog):
         
     def update_preview(self):
         """更新预览"""
+        self.settings = self.load_settings()  # 每次都重新读取
         company = self.company_edit.text().strip()
         project = self.project_edit.text().strip()
         version = self.version_edit.text().strip()
-        
+        self.logger.info(f"[新建项目] update_preview: company={company}, project={project}, version={version}")
         if company and project and version:
             # 构建项目名称
             project_name = f"{company}_{project}_{version}"
             self.name_preview.setText(project_name)
-            
             # 获取当前日期
             current_date = datetime.now().strftime("%Y%m%d")
-            
             # 构建项目文件夹名
             folder_name = f"{project_name}_{current_date}"
-            
             # 获取基础路径
             base_path = self.settings.get('project_path', '')
             if base_path:
                 full_path = os.path.join(base_path, folder_name)
+                self.logger.info(f"[新建项目] 预览路径: {full_path}")
                 self.path_preview.setText(full_path)
                 self.create_btn.setEnabled(True)
             else:
+                self.logger.warning("[新建项目] 未设置默认项目路径，创建按钮禁用")
                 self.path_preview.setText("错误：未设置默认项目路径，请在设置中配置")
                 self.create_btn.setEnabled(False)
         else:
+            self.logger.info("[新建项目] 关键信息未填写，创建按钮禁用")
             self.name_preview.setText("")
             self.path_preview.setText("")
             self.create_btn.setEnabled(False)
@@ -169,13 +172,17 @@ class ProjectWizard(QDialog):
     def load_settings(self):
         """加载设置"""
         try:
-            config_file = 'config/settings.json'
+            config_file = os.path.join(str(Path.home()), '.vsa', 'config', 'settings.json')
             if os.path.exists(config_file):
                 with open(config_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
+                    settings = json.load(f)
+                self.logger.info(f"[新建项目] 成功加载设置: {settings}")
+                return settings
+            self.logger.info("[新建项目] 未找到设置文件，返回空设置")
             return {}
         except Exception as e:
-            self.logger.error(f"加载设置失败: {str(e)}")
+            tb = traceback.format_exc()
+            self.logger.error(f"[新建项目] 加载设置失败: {str(e)}\n{tb}")
             return {}
             
     def create_project(self):
@@ -184,39 +191,34 @@ class ProjectWizard(QDialog):
             company = self.company_edit.text().strip()
             project = self.project_edit.text().strip()
             version = self.version_edit.text().strip()
-            
+            remark = self.remark_edit.toPlainText().strip()
+            self.logger.info(f"[新建项目] 创建参数: company={company}, project={project}, version={version}, remark={remark}")
             if not all([company, project, version]):
+                self.logger.warning("[新建项目] 有必填项未填写，创建中断")
                 QMessageBox.warning(self, "错误", "请填写所有必填项")
                 return
-                
             # 构建项目名称
             project_name = f"{company}_{project}_{version}"
-            
             # 获取当前日期
             current_date = datetime.now().strftime("%Y%m%d")
-            
             # 构建项目文件夹名
             folder_name = f"{project_name}_{current_date}"
-            
             # 获取基础路径
             base_path = self.settings.get('project_path', '')
             if not base_path:
+                self.logger.error("[新建项目] 未设置默认项目路径，创建中断")
                 QMessageBox.warning(self, "错误", "未设置默认项目路径，请在设置中配置")
                 return
-                
             # 创建主项目文件夹
             project_path = os.path.join(base_path, folder_name)
             os.makedirs(project_path, exist_ok=True)
-            
-            # 创建子文件夹
             os.makedirs(os.path.join(project_path, f"{folder_name}_image"), exist_ok=True)
-            
-            self.logger.info(f"项目创建成功: {project_path}")
+            self.logger.info(f"[新建项目] 项目创建成功: {project_path}")
             QMessageBox.information(self, "成功", "项目创建成功！")
             self.accept()
-            
         except Exception as e:
-            self.logger.error(f"创建项目失败: {str(e)}")
+            tb = traceback.format_exc()
+            self.logger.error(f"[新建项目] 创建项目失败: {str(e)}\n{tb}")
             QMessageBox.critical(self, "错误", f"创建项目失败: {str(e)}")
 
     def get_project_info(self):

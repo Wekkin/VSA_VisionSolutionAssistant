@@ -9,9 +9,13 @@ from UI.UI_DefectMatrix import DefectMatrixGenerator
 from UI.UI_ImageUpload import ImageUploader
 from core.poc.Slide_generation import PPTGeneratorApp  # 导入PPT生成器
 import openpyxl
+import traceback
+from utils.logger import Logger
+from pathlib import Path
+from utils.path_utils import get_resource_path
 
-ACTIVE_PROJECT_PATH = os.path.abspath(os.path.join('data', 'active_project.json'))
-CACHE_PATH = os.path.abspath(os.path.join('data', 'projects_cache.json'))
+ACTIVE_PROJECT_PATH = os.path.join(str(Path.home()), '.vsa', 'data', 'active_project.json')
+CACHE_PATH = os.path.join(str(Path.home()), '.vsa', 'data', 'projects_cache.json')
 
 class StepBar(QWidget):
     def __init__(self, steps, current_step=0, parent=None):
@@ -267,25 +271,14 @@ class RFQCheckStep(QWidget):
         
         # 检查框
         checkbox = QCheckBox()
-        checkbox.setStyleSheet("""
-            QCheckBox {
-                background: transparent;
-            }
-            QCheckBox::indicator {
-                width: 18px;
-                height: 18px;
-            }
-            QCheckBox::indicator:unchecked {
-                border: 2px solid #d9d9d9;
-                border-radius: 2px;
-                background: white;
-            }
-            QCheckBox::indicator:checked {
+        check_icon_path = get_resource_path('icons/check.png')
+        checkbox.setStyleSheet(f"""
+            QCheckBox::indicator:checked {{
                 border: none;
                 border-radius: 2px;
                 background: #1890ff;
-                image: url(icons/check.png);
-            }
+                image: url({check_icon_path});
+            }}
         """)
         
         # 标签
@@ -1027,6 +1020,8 @@ class FolderCleanStep(QWidget):
 class POCGenerator(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.logger = Logger()
+        self.parent = parent  # 保存主窗口引用
         self.current_step = 0
         self.project_path = ""
         self.initUI()
@@ -1078,65 +1073,74 @@ class POCGenerator(QWidget):
         layout.addLayout(button_layout)
         
     def nextStep(self):
-        if self.current_step < len(self.steps) - 1:
-            # 处理第一步到第二步的转换
-            if self.current_step == 0:
-                project_path = self.rfq_check.project_path
-                if not project_path:
-                    QMessageBox.warning(self, "警告", "请先选择项目路径！")
+        try:
+            self.logger.info(f"[POC] nextStep 当前步骤: {self.current_step}")
+            if self.current_step < len(self.steps) - 1:
+                # 处理第一步到第二步的转换
+                if self.current_step == 0:
+                    project_path = self.rfq_check.project_path
+                    self.logger.info(f"[POC] RFQ选择的项目路径: {project_path}")
+                    if not project_path:
+                        self.logger.warning("[POC] 未选择项目路径，无法进入下一步")
+                        QMessageBox.warning(self, "警告", "请先选择项目路径！")
+                        return
+                    # 更新缺陷矩阵生成器的项目路径
+                    self.defect_matrix.project_path = project_path
+                    # 更新图片上传器的项目路径
+                    self.image_upload.project_path = project_path
+                # 处理第四步到第五步的转换
+                if self.current_step == 3:  # 光照配置完成后
+                    project_path = self.rfq_check.project_path
+                    self.logger.info(f"[POC] 光照配置后项目路径: {project_path}")
+                    if not project_path:
+                        self.logger.warning("[POC] 未选择项目路径，无法进入PPT生成")
+                        QMessageBox.warning(self, "警告", "请先选择项目路径！")
+                        return
+                    self.hide()
+                    if self.parent is not None:
+                        self.parent.showMinimized()
+                    self.ppt_window = PPTGeneratorApp()
+                    self.ppt_window.showMaximized()
+                    self.ppt_window.closeEvent = lambda event: self.on_ppt_window_closed(event)
+                    self.current_step += 1
+                    self.step_bar.setCurrentStep(self.current_step)
+                    self.prev_btn.setEnabled(True)
+                    self.next_btn.setEnabled(False)
                     return
-                # 更新缺陷矩阵生成器的项目路径
-                self.defect_matrix.project_path = project_path
-                # 更新图片上传器的项目路径
-                self.image_upload.project_path = project_path
-                
-            # 处理第四步到第五步的转换
-            if self.current_step == 3:  # 光照配置完成后
-                # 获取项目路径
-                project_path = self.rfq_check.project_path
-                if not project_path:
-                    QMessageBox.warning(self, "警告", "请先选择项目路径！")
-                    return
-                
-                # 隐藏当前窗口
-                self.hide()
-                
-                # 创建并显示PPT生成器窗口
-                self.ppt_window = PPTGeneratorApp()
-                self.ppt_window.showMaximized()  # 全屏显示
-                
-                # 设置关闭事件处理
-                self.ppt_window.closeEvent = lambda event: self.on_ppt_window_closed(event)
-                
-                # 更新步骤
                 self.current_step += 1
+                self.stack.setCurrentIndex(self.current_step)
                 self.step_bar.setCurrentStep(self.current_step)
                 self.prev_btn.setEnabled(True)
-                self.next_btn.setEnabled(False)
-                return
-                
-            self.current_step += 1
-            self.stack.setCurrentIndex(self.current_step)
-            self.step_bar.setCurrentStep(self.current_step)
-            self.prev_btn.setEnabled(True)
-            if self.current_step == len(self.steps) - 1:
-                self.next_btn.setEnabled(False)
+                if self.current_step == len(self.steps) - 1:
+                    self.next_btn.setEnabled(False)
+        except Exception as e:
+            tb = traceback.format_exc()
+            self.logger.error(f"[POC] nextStep 异常: {str(e)}\n{tb}")
+            QMessageBox.critical(self, "错误", f"步骤切换失败: {str(e)}")
                 
     def on_ppt_window_closed(self, event):
         """PPT生成器窗口关闭时的处理"""
         # 显示主窗口
+        if self.parent is not None:
+            self.parent.showNormal()
         self.show()
         # 接受关闭事件
         event.accept()
                 
     def prevStep(self):
-        if self.current_step > 0:
-            self.current_step -= 1
-            self.stack.setCurrentIndex(self.current_step)
-            self.step_bar.setCurrentStep(self.current_step)
-            self.next_btn.setEnabled(True)
-            if self.current_step == 0:
-                self.prev_btn.setEnabled(False)
+        try:
+            self.logger.info(f"[POC] prevStep 当前步骤: {self.current_step}")
+            if self.current_step > 0:
+                self.current_step -= 1
+                self.stack.setCurrentIndex(self.current_step)
+                self.step_bar.setCurrentStep(self.current_step)
+                self.next_btn.setEnabled(True)
+                if self.current_step == 0:
+                    self.prev_btn.setEnabled(False)
+        except Exception as e:
+            tb = traceback.format_exc()
+            self.logger.error(f"[POC] prevStep 异常: {str(e)}\n{tb}")
+            QMessageBox.critical(self, "错误", f"步骤切换失败: {str(e)}")
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

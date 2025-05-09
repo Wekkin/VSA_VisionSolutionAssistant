@@ -13,6 +13,7 @@ from PyQt5.QtGui import QPixmap, QImage, QPainter, QColor, QPen
 from datetime import datetime
 import subprocess
 import json
+from utils.path_utils import get_resource_path
 
 
 class ImageProcessor(QGraphicsView):
@@ -587,7 +588,7 @@ class PPTGeneratorApp(QMainWindow):
     def generate_ppt(self):
         """生成PPT，使用缓存的裁剪图片"""
         # 使用模板文件创建演示文稿
-        template_path = os.path.join("src", "template.pptx")
+        template_path = get_resource_path('src/template.pptx')
         if not os.path.exists(template_path):
             QMessageBox.warning(self, "警告", "未找到模板文件！")
             return

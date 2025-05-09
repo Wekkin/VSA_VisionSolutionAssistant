@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QIcon, QPixmap
 import sys, os
+from utils.path_utils import get_resource_path
 
 class FileUploadCard(QFrame):
     def __init__(self, parent=None):
@@ -21,7 +22,7 @@ class FileUploadCard(QFrame):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
         self.icon = QLabel()
-        self.icon.setPixmap(QPixmap(':/icons/upload.png').scaled(48,48,Qt.KeepAspectRatio) if QIcon.hasThemeIcon('upload') else QPixmap())
+        self.icon.setPixmap(QPixmap(get_resource_path('icons/upload.png')).scaled(48,48,Qt.KeepAspectRatio) if QIcon.hasThemeIcon('upload') else QPixmap())
         self.icon.setAlignment(Qt.AlignCenter)
         self.icon.setText('\n⬆')
         self.icon.setStyleSheet('font-size:40px;color:#bfbfbf;')
