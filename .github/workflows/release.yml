@@ -18,10 +18,13 @@ jobs:
         include:
           - os: macos-latest
             architecture: 'arm64'
+            python-version: '3.8.10'
           - os: windows-latest
             architecture: 'x64'
+            python-version: '3.8'
           - os: ubuntu-latest
             architecture: 'x64'
+            python-version: '3.8'
 
     steps:
     - uses: actions/checkout@v3
