@@ -80,6 +80,15 @@ jobs:
         pyinstaller --clean --onefile --windowed --name "VSA_VisionSolutionAssistant" main.py
         cd dist
         zip -r ../VSA_VisionSolutionAssistant-macOS.zip *
+        cd ..
+        ls -la
+        if [ -f "VSA_VisionSolutionAssistant-macOS.zip" ]; then
+          echo "macOS zip file created successfully"
+          ls -l VSA_VisionSolutionAssistant-macOS.zip
+        else
+          echo "Error: macOS zip file not created"
+          exit 1
+        fi
 
     - name: Build Ubuntu App
       if: matrix.os == 'ubuntu-latest'
@@ -88,6 +97,15 @@ jobs:
         pyinstaller --clean --onefile --windowed --name "VSA_VisionSolutionAssistant" main.py
         cd dist
         zip -r ../VSA_VisionSolutionAssistant-Ubuntu.zip *
+        cd ..
+        ls -la
+        if [ -f "VSA_VisionSolutionAssistant-Ubuntu.zip" ]; then
+          echo "Ubuntu zip file created successfully"
+          ls -l VSA_VisionSolutionAssistant-Ubuntu.zip
+        else
+          echo "Error: Ubuntu zip file not created"
+          exit 1
+        fi
 
     - name: List files (Windows)
       if: matrix.os == 'windows-latest'
