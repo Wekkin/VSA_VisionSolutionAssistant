@@ -5,6 +5,9 @@ on:
     tags:
       - 'v*'  # 当推送 v 开头的标签时触发
 
+permissions:
+  contents: write  # 允许创建和修改 releases
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
