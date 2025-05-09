@@ -761,32 +761,32 @@ class MainWindow(QMainWindow):
         """显示项目创建向导"""
         from UI.UI_ProjectWizard import ProjectWizard
         try:
-            # 检查是否已设置默认项目路径
-            if not self.settings_page:
-                self.settings_page = SettingsPage()
-            project_path = self.settings_page.get_project_path()
+        # 检查是否已设置默认项目路径
+        if not self.settings_page:
+            self.settings_page = SettingsPage()
+        project_path = self.settings_page.get_project_path()
             self.logger.info(f"[主窗口] show_project_wizard 当前默认项目路径: {project_path}")
-            if not project_path:
-                reply = QMessageBox.warning(
-                    self,
-                    "未设置项目路径",
-                    "您还未设置默认项目路径，是否现在设置？",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.Yes
-                )
-                if reply == QMessageBox.Yes:
-                    self.show_settings_page()
-                return
-            # 创建并显示项目向导
-            wizard = ProjectWizard(self)
-            if wizard.exec_() == QDialog.Accepted:
+        if not project_path:
+            reply = QMessageBox.warning(
+                self,
+                "未设置项目路径",
+                "您还未设置默认项目路径，是否现在设置？",
+                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.Yes
+            )
+            if reply == QMessageBox.Yes:
+                self.show_settings_page()
+            return
+        # 创建并显示项目向导
+        wizard = ProjectWizard(self)
+        if wizard.exec_() == QDialog.Accepted:
                 self.logger.info("[主窗口] 新建项目完成，刷新项目列表")
-                self.refresh_project_list()
+            self.refresh_project_list()
         except Exception as e:
             tb = traceback.format_exc()
             self.logger.error(f"[主窗口] show_project_wizard 异常: {str(e)}\n{tb}")
             QMessageBox.critical(self, "错误", f"新建项目弹窗异常: {str(e)}")
-
+            
     def refresh_project_list(self):
         """刷新项目列表"""
         try:
