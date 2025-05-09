@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+vsa_env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.pptx
+!src/template.pptx
+temp_*.jpg
+temp_*.jpeg
+temp_*.png
+
+# Project specific
+resources/splash_background.png
+*.jpg
+*.jpeg
+*.png
+!icons/*.png  # 允许图标文件
+!icons/*.ico
+*.bmp
+*.log
+resources/templates/*
+!resources/templates/README.md
+resources/layouts/backgrounds/*
+!resources/layouts/backgrounds/.gitkeep
+resources/camera_data/*
+!resources/camera_data/README.md
+resources/integration_schemes/*
+!resources/integration_schemes/README.md
+
+# Logs
+logs/
+*.log
+
+# Database
+*.db
+*.sqlite3
+
+# 大文件
+*.AppImage
+AppDir/
+dist/
+build/
+__pycache__/
+*.pyc 
