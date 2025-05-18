@@ -736,15 +736,24 @@ class MainWindow(QMainWindow):
         self.integration_btn.setChecked(False)
 
     def show_extensions_page(self):
-        self.logger.info("尝试访问开发中的功能拓展功能")
-        # 显示"功能开发中"的提示框
-        QMessageBox.information(self, 
-                              "功能开发中", 
-                              "功能拓展模块正在开发中，敬请期待！",
-                              QMessageBox.Ok)
-        
-        # 取消当前按钮的选中状态，保持在当前页面
-        self.feature_btn.setChecked(False)
+        self.logger.info("切换到功能拓展页面")
+        # 取消其他按钮的选中状态
+        self.project_btn.setChecked(False)
+        self.poc_btn.setChecked(False)
+        self.analysis_btn.setChecked(False)
+        self.config_btn.setChecked(False)
+        self.integration_btn.setChecked(False)
+        self.feature_btn.setChecked(True)
+
+        # 如果功能拓展页面不存在，创建它
+        if not self.extensions_window:
+            from UI.UI_Extensions import ExtensionsWindow
+            self.extensions_window = ExtensionsWindow()
+            self.stacked_widget.addWidget(self.extensions_window)
+            self.extensions_page_index = self.stacked_widget.count() - 1
+
+        # 显示功能拓展页面
+        self.stacked_widget.setCurrentIndex(self.extensions_page_index)
 
     def show_analysis_page(self):
         self.logger.info("尝试访问开发中的缺陷分析功能")
@@ -761,27 +770,27 @@ class MainWindow(QMainWindow):
         """显示项目创建向导"""
         from UI.UI_ProjectWizard import ProjectWizard
         try:
-        # 检查是否已设置默认项目路径
-        if not self.settings_page:
-            self.settings_page = SettingsPage()
-        project_path = self.settings_page.get_project_path()
+            # 检查是否已设置默认项目路径
+            if not self.settings_page:
+                self.settings_page = SettingsPage()
+            project_path = self.settings_page.get_project_path()
             self.logger.info(f"[主窗口] show_project_wizard 当前默认项目路径: {project_path}")
-        if not project_path:
-            reply = QMessageBox.warning(
-                self,
-                "未设置项目路径",
-                "您还未设置默认项目路径，是否现在设置？",
-                QMessageBox.Yes | QMessageBox.No,
-                QMessageBox.Yes
-            )
-            if reply == QMessageBox.Yes:
-                self.show_settings_page()
-            return
-        # 创建并显示项目向导
-        wizard = ProjectWizard(self)
-        if wizard.exec_() == QDialog.Accepted:
+            if not project_path:
+                reply = QMessageBox.warning(
+                    self,
+                    "未设置项目路径",
+                    "您还未设置默认项目路径，是否现在设置？",
+                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.Yes
+                )
+                if reply == QMessageBox.Yes:
+                    self.show_settings_page()
+                return
+            # 创建并显示项目向导
+            wizard = ProjectWizard(self)
+            if wizard.exec_() == QDialog.Accepted:
                 self.logger.info("[主窗口] 新建项目完成，刷新项目列表")
-            self.refresh_project_list()
+                self.refresh_project_list()
         except Exception as e:
             tb = traceback.format_exc()
             self.logger.error(f"[主窗口] show_project_wizard 异常: {str(e)}\n{tb}")

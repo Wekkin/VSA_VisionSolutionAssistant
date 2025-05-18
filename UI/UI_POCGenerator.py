@@ -1075,44 +1075,44 @@ class POCGenerator(QWidget):
     def nextStep(self):
         try:
             self.logger.info(f"[POC] nextStep 当前步骤: {self.current_step}")
-        if self.current_step < len(self.steps) - 1:
-            # 处理第一步到第二步的转换
-            if self.current_step == 0:
-                project_path = self.rfq_check.project_path
+            if self.current_step < len(self.steps) - 1:
+                # 处理第一步到第二步的转换
+                if self.current_step == 0:
+                    project_path = self.rfq_check.project_path
                     self.logger.info(f"[POC] RFQ选择的项目路径: {project_path}")
-                if not project_path:
+                    if not project_path:
                         self.logger.warning("[POC] 未选择项目路径，无法进入下一步")
-                    QMessageBox.warning(self, "警告", "请先选择项目路径！")
-                    return
-                # 更新缺陷矩阵生成器的项目路径
-                self.defect_matrix.project_path = project_path
-                # 更新图片上传器的项目路径
-                self.image_upload.project_path = project_path
-            # 处理第四步到第五步的转换
-            if self.current_step == 3:  # 光照配置完成后
-                project_path = self.rfq_check.project_path
+                        QMessageBox.warning(self, "警告", "请先选择项目路径！")
+                        return
+                    # 更新缺陷矩阵生成器的项目路径
+                    self.defect_matrix.project_path = project_path
+                    # 更新图片上传器的项目路径
+                    self.image_upload.project_path = project_path
+                # 处理第四步到第五步的转换
+                if self.current_step == 3:  # 光照配置完成后
+                    project_path = self.rfq_check.project_path
                     self.logger.info(f"[POC] 光照配置后项目路径: {project_path}")
-                if not project_path:
+                    if not project_path:
                         self.logger.warning("[POC] 未选择项目路径，无法进入PPT生成")
-                    QMessageBox.warning(self, "警告", "请先选择项目路径！")
-                    return
-                self.hide()
-                if self.parent is not None:
-                    self.parent.showMinimized()
-                self.ppt_window = PPTGeneratorApp()
+                        QMessageBox.warning(self, "警告", "请先选择项目路径！")
+                        return
+                    self.hide()
+                    if self.parent is not None:
+                        self.parent.showMinimized()
+                    self.ppt_window = PPTGeneratorApp()
                     self.ppt_window.showMaximized()
-                self.ppt_window.closeEvent = lambda event: self.on_ppt_window_closed(event)
+                    self.ppt_window.closeEvent = lambda event: self.on_ppt_window_closed(event)
+                    self.current_step += 1
+                    self.step_bar.setCurrentStep(self.current_step)
+                    self.prev_btn.setEnabled(True)
+                    self.next_btn.setEnabled(False)
+                    return
                 self.current_step += 1
+                self.stack.setCurrentIndex(self.current_step)
                 self.step_bar.setCurrentStep(self.current_step)
                 self.prev_btn.setEnabled(True)
-                self.next_btn.setEnabled(False)
-                return
-            self.current_step += 1
-            self.stack.setCurrentIndex(self.current_step)
-            self.step_bar.setCurrentStep(self.current_step)
-            self.prev_btn.setEnabled(True)
-            if self.current_step == len(self.steps) - 1:
-                self.next_btn.setEnabled(False)
+                if self.current_step == len(self.steps) - 1:
+                    self.next_btn.setEnabled(False)
         except Exception as e:
             tb = traceback.format_exc()
             self.logger.error(f"[POC] nextStep 异常: {str(e)}\n{tb}")
@@ -1130,13 +1130,13 @@ class POCGenerator(QWidget):
     def prevStep(self):
         try:
             self.logger.info(f"[POC] prevStep 当前步骤: {self.current_step}")
-        if self.current_step > 0:
-            self.current_step -= 1
-            self.stack.setCurrentIndex(self.current_step)
-            self.step_bar.setCurrentStep(self.current_step)
-            self.next_btn.setEnabled(True)
-            if self.current_step == 0:
-                self.prev_btn.setEnabled(False)
+            if self.current_step > 0:
+                self.current_step -= 1
+                self.stack.setCurrentIndex(self.current_step)
+                self.step_bar.setCurrentStep(self.current_step)
+                self.next_btn.setEnabled(True)
+                if self.current_step == 0:
+                    self.prev_btn.setEnabled(False)
         except Exception as e:
             tb = traceback.format_exc()
             self.logger.error(f"[POC] prevStep 异常: {str(e)}\n{tb}")

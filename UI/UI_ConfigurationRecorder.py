@@ -303,80 +303,80 @@ class ConfigurationRecorder(QWidget):
     def add_row(self, data=None):
         try:
             self.logger.info(f"[配置记录] 添加工位配置行, data={data}")
-        row = self.table.rowCount()
-        self.table.insertRow(row)
-        font_css = "font-size:14px; min-width:120px;"
-        # 相机 QLineEdit + QCompleter
-        camera_edit = QLineEdit(data[0] if data else "")
-        camera_edit.setStyleSheet(font_css)
-        camera_completer = QCompleter(self.erp_camera_models)
-        camera_completer.setCaseSensitivity(Qt.CaseInsensitive)
-        camera_edit.setCompleter(camera_completer)
-        self.table.setCellWidget(row, 0, camera_edit)
-        # 镜头 QLineEdit + QCompleter
-        lens_edit = QLineEdit(data[1] if data else "")
-        lens_edit.setStyleSheet(font_css)
-        lens_completer = QCompleter(self.erp_lens_models)
-        lens_completer.setCaseSensitivity(Qt.CaseInsensitive)
-        lens_edit.setCompleter(lens_completer)
-        self.table.setCellWidget(row, 1, lens_edit)
-        # 其余列全部为QLineEdit
-        editors = [camera_edit, lens_edit]
-        for col in range(2, self.table.columnCount()):
-            val = data[col] if data and len(data) > col else ""
-            edit = QLineEdit(val)
-            edit.setStyleSheet(font_css)
-            self.table.setCellWidget(row, col, edit)
-            editors.append(edit)
-        # 公式自动计算逻辑
-        def update_all_auto_fields():
-            camera = camera_edit.text().strip()
-            try:
-                fov_len = float(editors[4].text())  # 视野长
-                fov_wid = float(editors[5].text())  # 视野宽
-                exposure = float(editors[8].text())  # 曝光时间(ms)
-                mat_len = float(editors[11].text())  # 物料尺寸长
-            except ValueError:
-                editors[14].setText("")
-                editors[15].setText("")
-                editors[16].setText("")
-                editors[17].setText("")
-                editors[18].setText("")
-                return
-            # 像素大小
-            if camera == 'a2A2448-75ucBAC':
-                px_len = fov_len / 2448
-                px_wid = fov_wid / 2048
-                speed_h = fov_len / 2448 / exposure * 1000 * 2.56 if exposure > 0 else 0
-                speed_v = fov_wid / 2048 / exposure * 1000 * 2.56 if exposure > 0 else 0
-            elif camera == 'a2A4096-30ucBAC':
-                px_len = fov_len / 4096
-                px_wid = fov_wid / 3000
-                speed_h = fov_len / 4096 / exposure * 1000 * 2.56 if exposure > 0 else 0
-                speed_v = fov_wid / 3000 / exposure * 1000 * 2.56 if exposure > 0 else 0
-            else:
-                editors[14].setText("")
-                editors[15].setText("")
-                editors[16].setText("")
-                editors[17].setText("")
-                editors[18].setText("")
-                return
-            editors[14].setText(f"{px_len:.5f}")  # 像素大小水平
-            editors[15].setText(f"{px_wid:.5f}")  # 像素大小垂直
-            editors[16].setText(f"{speed_h:.2f}")  # 飞拍速度水平
-            editors[17].setText(f"{speed_v:.2f}")  # 飞拍速度垂直
-            # 图像节拍
-            if speed_h > 0:
-                image_cycle = mat_len / speed_h
-                editors[18].setText(f"{image_cycle:.2f}")
-            else:
-                editors[18].setText("")
-        # 绑定信号，确保实时联动
-        camera_edit.textChanged.connect(update_all_auto_fields)
-        editors[4].textChanged.connect(update_all_auto_fields)  # 视野长
-        editors[5].textChanged.connect(update_all_auto_fields)  # 视野宽
-        editors[8].textChanged.connect(update_all_auto_fields)  # 曝光时间
-        editors[11].textChanged.connect(update_all_auto_fields) # 物料尺寸长
+            row = self.table.rowCount()
+            self.table.insertRow(row)
+            font_css = "font-size:14px; min-width:120px;"
+            # 相机 QLineEdit + QCompleter
+            camera_edit = QLineEdit(data[0] if data else "")
+            camera_edit.setStyleSheet(font_css)
+            camera_completer = QCompleter(self.erp_camera_models)
+            camera_completer.setCaseSensitivity(Qt.CaseInsensitive)
+            camera_edit.setCompleter(camera_completer)
+            self.table.setCellWidget(row, 0, camera_edit)
+            # 镜头 QLineEdit + QCompleter
+            lens_edit = QLineEdit(data[1] if data else "")
+            lens_edit.setStyleSheet(font_css)
+            lens_completer = QCompleter(self.erp_lens_models)
+            lens_completer.setCaseSensitivity(Qt.CaseInsensitive)
+            lens_edit.setCompleter(lens_completer)
+            self.table.setCellWidget(row, 1, lens_edit)
+            # 其余列全部为QLineEdit
+            editors = [camera_edit, lens_edit]
+            for col in range(2, self.table.columnCount()):
+                val = data[col] if data and len(data) > col else ""
+                edit = QLineEdit(val)
+                edit.setStyleSheet(font_css)
+                self.table.setCellWidget(row, col, edit)
+                editors.append(edit)
+            # 公式自动计算逻辑
+            def update_all_auto_fields():
+                camera = camera_edit.text().strip()
+                try:
+                    fov_len = float(editors[4].text())  # 视野长
+                    fov_wid = float(editors[5].text())  # 视野宽
+                    exposure = float(editors[8].text())  # 曝光时间(ms)
+                    mat_len = float(editors[11].text())  # 物料尺寸长
+                except ValueError:
+                    editors[14].setText("")
+                    editors[15].setText("")
+                    editors[16].setText("")
+                    editors[17].setText("")
+                    editors[18].setText("")
+                    return
+                # 像素大小
+                if camera == 'a2A2448-75ucBAC':
+                    px_len = fov_len / 2448
+                    px_wid = fov_wid / 2048
+                    speed_h = fov_len / 2448 / exposure * 1000 * 2.56 if exposure > 0 else 0
+                    speed_v = fov_wid / 2048 / exposure * 1000 * 2.56 if exposure > 0 else 0
+                elif camera == 'a2A4096-30ucBAC':
+                    px_len = fov_len / 4096
+                    px_wid = fov_wid / 3000
+                    speed_h = fov_len / 4096 / exposure * 1000 * 2.56 if exposure > 0 else 0
+                    speed_v = fov_wid / 3000 / exposure * 1000 * 2.56 if exposure > 0 else 0
+                else:
+                    editors[14].setText("")
+                    editors[15].setText("")
+                    editors[16].setText("")
+                    editors[17].setText("")
+                    editors[18].setText("")
+                    return
+                editors[14].setText(f"{px_len:.5f}")  # 像素大小水平
+                editors[15].setText(f"{px_wid:.5f}")  # 像素大小垂直
+                editors[16].setText(f"{speed_h:.2f}")  # 飞拍速度水平
+                editors[17].setText(f"{speed_v:.2f}")  # 飞拍速度垂直
+                # 图像节拍
+                if speed_h > 0:
+                    image_cycle = mat_len / speed_h
+                    editors[18].setText(f"{image_cycle:.2f}")
+                else:
+                    editors[18].setText("")
+            # 绑定信号，确保实时联动
+            camera_edit.textChanged.connect(update_all_auto_fields)
+            editors[4].textChanged.connect(update_all_auto_fields)  # 视野长
+            editors[5].textChanged.connect(update_all_auto_fields)  # 视野宽
+            editors[8].textChanged.connect(update_all_auto_fields)  # 曝光时间
+            editors[11].textChanged.connect(update_all_auto_fields) # 物料尺寸长
         except Exception as e:
             tb = traceback.format_exc()
             self.logger.error(f"[配置记录] 添加工位配置行异常: {str(e)}\n{tb}")
